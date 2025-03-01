@@ -1,4 +1,5 @@
 import 'package:eventure/core/utils/size/size_config.dart';
+import 'package:eventure/features/admin_Dashboard/testScreen.dart';
 import 'package:eventure/features/events/presentation/pages/home_page.dart';
 import 'package:eventure/firebase_options.dart';
 import 'package:eventure/injection.dart';
@@ -16,9 +17,10 @@ Future<void> main() async {
   // Initialize dependency injection
   init();
   if (kIsWeb) {
-    throw Exception("This app is only available on mobile.");
+    runApp(AdminApp());
+  } else {
+    runApp(const MyApp());
   }
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -35,6 +37,18 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         home: HomePage(),
       ),
+    );
+  }
+}
+
+class AdminApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Admin Dashboard',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: AdminDashboard(),
     );
   }
 }
