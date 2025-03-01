@@ -3,6 +3,7 @@ import 'package:eventure/features/events/presentation/pages/home_page.dart';
 import 'package:eventure/firebase_options.dart';
 import 'package:eventure/injection.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -14,7 +15,9 @@ Future<void> main() async {
 
   // Initialize dependency injection
   init();
-
+  if (kIsWeb) {
+    throw Exception("This app is only available on mobile.");
+  }
   runApp(const MyApp());
 }
 
