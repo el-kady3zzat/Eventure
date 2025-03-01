@@ -1,3 +1,5 @@
+import 'package:eventure/features/events/presentation/blocs/calendar/calendar_cubit.dart';
+import 'package:eventure/features/events/presentation/blocs/nav_bar/nav_bar_cubit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
 
@@ -34,4 +36,7 @@ void init() {
   // getIt.registerFactory(
   //   () => AuthBloc(authRepository: getIt<AuthRepository>()),
   // );
+  getIt.registerFactory(() => NavBarCubit(0));
+
+  getIt.registerFactory(() => CalendarCubit());
 }
