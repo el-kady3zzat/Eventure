@@ -3,6 +3,7 @@ import 'package:eventure/core/utils/theme/colors.dart';
 import 'package:eventure/features/events/presentation/blocs/nav_bar/nav_bar_cubit.dart';
 import 'package:eventure/features/events/presentation/pages/calendar_page.dart';
 import 'package:eventure/features/events/presentation/pages/events_page.dart';
+import 'package:eventure/features/events/presentation/pages/test_setting_page.dart';
 import 'package:eventure/features/events/presentation/widgets/home_page/nav_bar.dart';
 import 'package:eventure/injection.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +27,10 @@ class HomePage extends StatelessWidget {
               return EventsPage();
             } else if (pageIndex == 1) {
               return CalendarPage();
-            } else {
+            } else if (pageIndex == 3) {
+              return SettingsPage();
+            }
+            else{
               return Placeholder();
             }
           },

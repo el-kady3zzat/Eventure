@@ -1,6 +1,7 @@
 import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/features/admin_Dashboard/testScreen.dart';
-import 'package:eventure/features/events/presentation/pages/home_page.dart';
+
+import 'package:eventure/features/splash/presentation/page/splash.dart';
 import 'package:eventure/firebase_options.dart';
 import 'package:eventure/injection.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -35,7 +36,7 @@ class MyApp extends StatelessWidget {
       minTextAdapt: true,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: HomePage(),
+        home: SplashScreen(),
       ),
     );
   }
