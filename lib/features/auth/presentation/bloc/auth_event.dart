@@ -61,3 +61,33 @@ class ValidateFieldsRequested extends AuthEvent {
   @override
   List<Object> get props => [name, email, password, confirmPassword];
 }
+
+// New events
+class GoogleSignInRequested extends AuthEvent {}
+
+class PhoneNumberSubmitted extends AuthEvent {
+  final String phoneNumber;
+
+  const PhoneNumberSubmitted({required this.phoneNumber});
+
+  @override
+  List<Object> get props => [phoneNumber];
+}
+
+class OTPSubmitted extends AuthEvent {
+  final String otp;
+
+  const OTPSubmitted({required this.otp});
+
+  @override
+  List<Object> get props => [otp];
+}
+
+class ResetPasswordRequested extends AuthEvent {
+  final String email;
+
+  const ResetPasswordRequested({required this.email});
+
+  @override
+  List<Object> get props => [email];
+}

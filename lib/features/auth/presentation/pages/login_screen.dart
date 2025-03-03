@@ -14,6 +14,7 @@ import 'package:eventure/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -56,15 +57,35 @@ class _LoginViewState extends State<LoginView> {
             message: state.message,
             duration: const Duration(milliseconds: 1500),
           );
-        } else if (state is AuthSuccess) {
+        } else if (state is AuthSuccess ||
+            state is GoogleSignInSuccess ||
+            state is OTPVerificationSuccess) {
           CustomSnackBar.showSuccess(
             context: context,
-            message: state.message,
+            message: state is AuthSuccess
+                ? state.message
+                : state is GoogleSignInSuccess
+                ? state.message
+                : (state as OTPVerificationSuccess).message,
             duration: const Duration(milliseconds: 1500),
           );
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => HomePage()));
-        } else if (state is AuthError) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => HomePage()),
+          );
+        } else if (state is AuthError ||
+            state is GoogleSignInError ||
+            state is ResetPasswordError) {
           CustomSnackBar.showError(
+            context: context,
+            message: state is AuthError
+                ? state.message
+                : state is GoogleSignInError
+                ? state.message
+                : (state as ResetPasswordError).message,
+            duration: const Duration(milliseconds: 1500),
+          );
+        } else if (state is ResetPasswordEmailSent) {
+          CustomSnackBar.showSuccess(
             context: context,
             message: state.message,
             duration: const Duration(milliseconds: 1500),
@@ -103,25 +124,15 @@ class _LoginViewState extends State<LoginView> {
                           ),
                         ),
                         SizedBox(height: 36.h),
-                        AuthTextField(
-                          labelText: 'Email',
-                          hintText: 'Enter your email',
-                          prefixIcon: Icons.email,
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          fieldType: 'email',
-                        ),
+                        _buildLoginForm(),
                         SizedBox(height: 24.h),
-                        AuthTextField(
-                          labelText: 'Password',
-                          hintText: 'Enter your password',
-                          prefixIcon: Icons.lock,
-                          controller: _passwordController,
-                          isPassword: true,
-                          fieldType: 'password',
-                        ),
-                        SizedBox(height: 48.h),
+                        _buildForgotPassword(),
+                        SizedBox(height: 24.h),
                         _buildLoginButton(),
+                        SizedBox(height: 24.h),
+                        _buildDivider(),
+                        SizedBox(height: 24.h),
+                        _buildGoogleSignIn(),
                         SizedBox(height: 36.h),
                         _buildSignUpRow(),
                       ],
@@ -137,6 +148,46 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
+  Widget _buildLoginForm() {
+    return Column(
+      children: [
+        AuthTextField(
+          labelText: 'Email',
+          hintText: 'Enter your email',
+          prefixIcon: Icons.email,
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          fieldType: 'email',
+        ),
+        SizedBox(height: 24.h),
+        AuthTextField(
+          labelText: 'Password',
+          hintText: 'Enter your password',
+          prefixIcon: Icons.lock,
+          controller: _passwordController,
+          isPassword: true,
+          fieldType: 'password',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForgotPassword() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: _showForgotPasswordDialog,
+        child: Text(
+          'Forgot Password?',
+          style: TextStyle(
+            color: Theme.of(context).primaryColor,
+            fontSize: 14.sp,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildLoginButton() {
     return SizedBox(
       width: double.infinity,
@@ -148,43 +199,86 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        Expanded(child: Divider()),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: Text(
+            'Or continue with',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 14.sp,
+            ),
+          ),
+        ),
+        Expanded(child: Divider()),
+      ],
+    );
+  }
+
+  Widget _buildGoogleSignIn() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56.h,
+      child: OutlinedButton.icon(
+        icon: FaIcon(FontAwesomeIcons.google, color: Colors.red),
+        label: Text(
+          'Continue with Google',
+          style: TextStyle(
+            fontSize: 16.sp,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.grey.shade300),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        onPressed: _handleGoogleSignIn,
+      ),
+    );
+  }
+
   Widget _buildSignUpRow() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return // In your login_screen.dart, update the Row that's causing the overflow
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Flexible(
-            child: Text(
-              'Don\'t have an account?',
-              style: TextStyle(fontSize: 14.sp),
-              overflow: TextOverflow.ellipsis,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Flexible(
+          child: Text(
+            'Don\'t have an account?',
+            style: TextStyle(fontSize: 14.sp),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => SignUpScreen())),
+          child: Text(
+            'Sign Up',
+            style: TextStyle(
+              color: isDarkMode ? kMainDark : kMainDark,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => SignUpScreen())),
-            child: Text(
-              'Sign Up',
-              style: TextStyle(
-                color: isDarkMode ? kMainDark : kMainDark,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 
   void _handleLogin() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
-            SignInRequested(
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-            ),
-          );
+        SignInRequested(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        ),
+      );
     } else {
       CustomSnackBar.showError(
         context: context,
@@ -192,5 +286,55 @@ class _LoginViewState extends State<LoginView> {
         duration: const Duration(milliseconds: 1500),
       );
     }
+  }
+
+  void _handleGoogleSignIn() {
+    context.read<AuthBloc>().add(GoogleSignInRequested());
+  }
+
+  void _showForgotPasswordDialog() {
+    final emailController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Reset Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Enter your email address and we\'ll send you a link to reset your password.',
+              style: TextStyle(fontSize: 14.sp),
+            ),
+            SizedBox(height: 16.h),
+            AuthTextField(
+              controller: emailController,
+              labelText: 'Email',
+              hintText: 'Enter your email',
+              prefixIcon: Icons.email,
+              keyboardType: TextInputType.emailAddress,
+              fieldType: 'email',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (emailController.text.isNotEmpty) {
+                context.read<AuthBloc>().add(
+                  ResetPasswordRequested(email: emailController.text.trim()),
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: Text('Send Reset Link'),
+          ),
+        ],
+      ),
+    );
   }
 }

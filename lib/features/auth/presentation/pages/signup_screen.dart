@@ -14,7 +14,7 @@ import 'package:eventure/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -36,12 +36,22 @@ class SignUpView extends StatefulWidget {
 }
 
 class _SignUpViewState extends State<SignUpView> {
-  final _formKey = GlobalKey<FormState>(); // Single form key
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,15 +63,35 @@ class _SignUpViewState extends State<SignUpView> {
             message: state.message,
             duration: const Duration(milliseconds: 1500),
           );
-        } else if (state is AuthSuccess) {
+        } else if (state is AuthSuccess ||
+            state is GoogleSignInSuccess ||
+            state is OTPVerificationSuccess) {
           CustomSnackBar.showSuccess(
             context: context,
-            message: state.message,
+            message: state is AuthSuccess
+                ? state.message
+                : state is GoogleSignInSuccess
+                ? state.message
+                : (state as OTPVerificationSuccess).message,
             duration: const Duration(milliseconds: 1500),
           );
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => HomePage()));
-        } else if (state is AuthError) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => HomePage()),
+          );
+        } else if (state is AuthError ||
+            state is GoogleSignInError ||
+            state is OTPVerificationError) {
           CustomSnackBar.showError(
+            context: context,
+            message: state is AuthError
+                ? state.message
+                : state is GoogleSignInError
+                ? state.message
+                : (state as OTPVerificationError).message,
+            duration: const Duration(milliseconds: 1500),
+          );
+        } else if (state is PhoneNumberVerificationSent) {
+          CustomSnackBar.showInfo(
             context: context,
             message: state.message,
             duration: const Duration(milliseconds: 1500),
@@ -73,7 +103,7 @@ class _SignUpViewState extends State<SignUpView> {
           body: Stack(
             children: [
               SafeArea(
-                child: Form( // Single Form widget
+                child: Form(
                   key: _formKey,
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
@@ -101,8 +131,12 @@ class _SignUpViewState extends State<SignUpView> {
                         ),
                         SizedBox(height: 36.h),
                         _buildSignUpForm(),
-                        SizedBox(height: 48.h),
+                        SizedBox(height: 24.h),
                         _buildSignUpButton(),
+                        SizedBox(height: 24.h),
+                        _buildDivider(),
+                        SizedBox(height: 24.h),
+                        _buildSocialSignIn(),
                         SizedBox(height: 36.h),
                         _buildLoginRow(),
                       ],
@@ -169,6 +203,7 @@ class _SignUpViewState extends State<SignUpView> {
       ],
     );
   }
+
   Widget _buildSignUpButton() {
     return SizedBox(
       width: double.infinity,
@@ -180,35 +215,113 @@ class _SignUpViewState extends State<SignUpView> {
     );
   }
 
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        Expanded(child: Divider()),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: Text(
+            'Or continue with',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 14.sp,
+            ),
+          ),
+        ),
+        Expanded(child: Divider()),
+      ],
+    );
+  }
+
+  Widget _buildSocialSignIn() {
+    return Column(
+      children: [
+        _buildGoogleSignInButton(),
+        SizedBox(height: 16.h),
+        _buildPhoneSignInButton(),
+      ],
+    );
+  }
+
+  Widget _buildGoogleSignInButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56.h,
+      child: OutlinedButton.icon(
+        icon: FaIcon(FontAwesomeIcons.google, color: Colors.red),
+        label: Text(
+          'Continue with Google',
+          style: TextStyle(
+            fontSize: 16.sp,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.grey.shade300),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        onPressed: _handleGoogleSignIn,
+      ),
+    );
+  }
+
+  Widget _buildPhoneSignInButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56.h,
+      child: OutlinedButton.icon(
+        icon: Icon(Icons.phone, color: Colors.green),
+        label: Text(
+          'Continue with Phone',
+          style: TextStyle(
+            fontSize: 16.sp,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.grey.shade300),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        onPressed: _showPhoneSignInDialog,
+      ),
+    );
+  }
+
   Widget _buildLoginRow() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return // In your signup_screen.dart, find the Row that's causing the overflow (around line 186)
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min, // Add this
-        children: [
-          Flexible( // Wrap the Text in Flexible
-            child: Text(
-              'Already have an account?',
-              style: TextStyle(fontSize: 14.sp),
-              overflow: TextOverflow.ellipsis,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            'Already have an account?',
+            style: TextStyle(fontSize: 14.sp),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => LoginScreen())),
+          child: Text(
+            'Log In',
+            style: TextStyle(
+              color: isDarkMode ? kMainDark : kMainLight,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          TextButton(
-            onPressed: () =>Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginScreen())),
-            child: Text(
-              'Log In',
-              style: TextStyle(
-                color: isDarkMode ? kMainDark : kMainLight,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      );
+        ),
+      ],
+    );
   }
+
   void _handleSignUp() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
@@ -221,5 +334,71 @@ class _SignUpViewState extends State<SignUpView> {
         ),
       );
     }
+  }
+
+  void _handleGoogleSignIn() {
+    context.read<AuthBloc>().add(GoogleSignInRequested());
+  }
+
+  void _showPhoneSignInDialog() {
+    final phoneController = TextEditingController();
+    final otpController = TextEditingController();
+    bool isVerifying = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Phone Authentication'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isVerifying) ...[
+                AuthTextField(
+                  controller: phoneController,
+                  labelText: 'Phone Number',
+                  hintText: '+1234567890',
+                  prefixIcon: Icons.phone,
+                  keyboardType: TextInputType.phone,
+                  fieldType: 'phone',
+                ),
+              ] else ...[
+                AuthTextField(
+                  controller: otpController,
+                  labelText: 'OTP Code',
+                  hintText: '123456',
+                  prefixIcon: Icons.lock_clock,
+                  keyboardType: TextInputType.number,
+                  fieldType: 'otp',
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (!isVerifying) {
+                  context.read<AuthBloc>().add(
+                    PhoneNumberSubmitted(
+                        phoneNumber: phoneController.text),
+                  );
+                  setState(() => isVerifying = true);
+                } else {
+                  context.read<AuthBloc>().add(
+                    OTPSubmitted(otp: otpController.text),
+                  );
+                  Navigator.pop(context);
+                }
+              },
+              child: Text(isVerifying ? 'Verify' : 'Send OTP'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
