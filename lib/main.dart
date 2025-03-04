@@ -1,4 +1,5 @@
 import 'package:eventure/core/utils/size/size_config.dart';
+import 'package:eventure/features/admin_Dashboard/presentation/pages/add_event.dart';
 import 'package:eventure/features/admin_Dashboard/testScreen.dart';
 import 'package:eventure/features/events/presentation/pages/home_page.dart';
 import 'package:eventure/firebase_options.dart';
@@ -42,13 +43,15 @@ class MyApp extends StatelessWidget {
 }
 
 class AdminApp extends StatelessWidget {
+  const AdminApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Admin Dashboard',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: AdminDashboard(),
+      home: AddEvent(),
     );
   }
 }
