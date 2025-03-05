@@ -6,12 +6,14 @@ class NumericStepperField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final IconData? icon;
+  final String? Function(String?)? validator;
 
   const NumericStepperField({
     super.key,
     required this.controller,
     required this.hint,
     this.icon,
+    this.validator,
   });
 
   @override
@@ -38,30 +40,33 @@ class _NumericStepperFieldState extends State<NumericStepperField> {
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       cursorColor: white,
-      style:  TextStyle(color: white),
+      style: TextStyle(color: white),
+      validator: widget.validator,
       decoration: InputDecoration(
         hintText: widget.hint,
-        hintStyle: const TextStyle(color: Colors.white70),
+        hintStyle: TextStyle(color: lightWhite),
         filled: true,
         fillColor: kMainLight,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.grey, width: 0.2),
+          borderSide: BorderSide(color: grey, width: 0.2),
         ),
-        prefixIcon: widget.icon != null ? Icon(widget.icon, color: Colors.white70) : null,
+        prefixIcon:
+            widget.icon != null ? Icon(widget.icon, color: lightWhite) : null,
         suffixIcon: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.arrow_drop_up, color: Colors.white70),
+              icon: Icon(Icons.arrow_drop_up, color: lightWhite),
               onPressed: _increment,
             ),
             IconButton(
-              icon: Icon(Icons.arrow_drop_down, color: Colors.white70),
+              icon: Icon(Icons.arrow_drop_down, color: lightWhite),
               onPressed: _decrement,
             ),
           ],
         ),
+        errorStyle: TextStyle(color: Colors.redAccent),
       ),
     );
   }

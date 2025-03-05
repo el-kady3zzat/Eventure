@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/widgets/event_textfield.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/widgets/number_input.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddEvent extends StatefulWidget {
   const AddEvent({super.key});
@@ -13,6 +16,8 @@ class AddEvent extends StatefulWidget {
 
 class _AddEventState extends State<AddEvent> {
   final _formKey = GlobalKey<FormState>();
+  Uint8List? _webImage;
+
   TextEditingController addressController = TextEditingController();
   TextEditingController coverController = TextEditingController();
   TextEditingController dateTimeController = TextEditingController();
@@ -44,6 +49,23 @@ class _AddEventState extends State<AddEvent> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      if (kIsWeb) {
+        // Web: Store image in Uint8List
+        Uint8List imageBytes = await pickedFile.readAsBytes();
+        setState(() {
+          _webImage = imageBytes;
+          coverController.text = base64Encode(imageBytes);
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -53,7 +75,7 @@ class _AddEventState extends State<AddEvent> {
       child: Scaffold(
         backgroundColor: kMainDark,
         body: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 120),
+          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 200),
           child: Form(
             key: _formKey,
             child: ListView(
@@ -73,17 +95,40 @@ class _AddEventState extends State<AddEvent> {
                 SizedBox(
                   height: 70,
                 ),
-                // Image Picker Placeholder
-                Container(
-                  height: 120,
-                  width: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade700,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.purpleAccent, width: 1),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.image, size: 50, color: Colors.white),
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          height: 120,
+                          width: 250,
+                          decoration: BoxDecoration(
+                            color: kMainLight,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: kButton2, width: 0.2),
+                            image: _webImage != null
+                                ? DecorationImage(
+                                    image: MemoryImage(_webImage!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                          ),
+                          child: _webImage == null
+                              ? const Center(
+                                  child: Icon(Icons.image,
+                                      size: 50, color: Colors.white),
+                                )
+                              : null,
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        "Tap to pick an image",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(
@@ -95,6 +140,12 @@ class _AddEventState extends State<AddEvent> {
                       child: CustomEventTextField(
                         hint: "Enter event title",
                         controller: titleController,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Title is required";
+                          }
+                          return null;
+                        },
                       ),
                     ),
                     SizedBox(
@@ -107,6 +158,12 @@ class _AddEventState extends State<AddEvent> {
                         icon: Icons.calendar_today,
                         readOnly: true,
                         onTap: () => _pickDateTime(context),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Date and Time are required";
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -120,6 +177,12 @@ class _AddEventState extends State<AddEvent> {
                       child: CustomEventTextField(
                           hint: "Location 'URL'",
                           controller: locationController,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Location is required";
+                            }
+                            return null;
+                          },
                           icon: Icons.location_on),
                     ),
                     SizedBox(
@@ -130,6 +193,12 @@ class _AddEventState extends State<AddEvent> {
                         hint: "Price (\$)",
                         controller: priceController,
                         keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Price is required";
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -143,6 +212,12 @@ class _AddEventState extends State<AddEvent> {
                       child: CustomEventTextField(
                         hint: "address",
                         controller: addressController,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Address is required";
+                          }
+                          return null;
+                        },
                       ),
                     ),
                     SizedBox(
@@ -153,6 +228,12 @@ class _AddEventState extends State<AddEvent> {
                         hint: "Number of Seats",
                         controller: seatsController,
                         icon: Icons.chair,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Number of seats is required";
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -167,6 +248,12 @@ class _AddEventState extends State<AddEvent> {
                         hint: "Enter event details",
                         controller: descriptionController,
                         maxLines: 5,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Details are required";
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -181,6 +268,16 @@ class _AddEventState extends State<AddEvent> {
                     child: FilledButton(
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
+                            if (_webImage == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      "Please select a cover image for the event."),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
                             var db = FirebaseFirestore.instance;
                             final data = {
                               "id": db.collection("events").doc().id,
