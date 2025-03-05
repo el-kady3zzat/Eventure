@@ -184,7 +184,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         home: SplashScreen(),
-        ),
+        
         routes: {
           '/home': (context) => BlocProvider(
                 create: (context) =>
@@ -201,7 +201,7 @@ class MyApp extends StatelessWidget {
                 child: DetailsPage(),
               )
         },
-      ),
+      )
     );
   }
 }

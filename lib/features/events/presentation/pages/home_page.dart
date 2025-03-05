@@ -7,9 +7,7 @@ import 'package:eventure/features/events/presentation/pages/schedule_page.dart';
 import 'package:eventure/features/events/presentation/pages/events_page.dart';
 
 import 'package:eventure/features/events/presentation/pages/favorite_page.dart';
-
-import 'package:eventure/features/events/presentation/pages/test_setting_page.dart';
-
+import 'package:eventure/features/events/presentation/pages/settings_page.dart';
 import 'package:eventure/features/events/presentation/widgets/home_page/nav_bar.dart';
 import 'package:eventure/injection.dart';
 import 'package:flutter/material.dart';
@@ -47,9 +45,8 @@ class HomePage extends StatelessWidget {
                 ],
                 child: FavoritePage(),
               );
-            } else {
-              return CalendarPage();
-            } else if (pageIndex == 3) {
+            } 
+            else if (pageIndex == 3) {
               return SettingsPage();
             }
             else{

@@ -37,10 +37,7 @@ import 'package:eventure/features/auth/infrastructure/biometric/local_biometric_
 import 'package:eventure/features/auth/infrastructure/firebase/firebase_auth_service.dart';
 import 'package:eventure/features/auth/infrastructure/firebase/firebase_user_repository.dart';
 import 'package:eventure/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:eventure/features/events/presentation/blocs/calendar/calendar_cubit.dart';
-import 'package:eventure/features/events/presentation/blocs/nav_bar/nav_bar_cubit.dart';
 import 'package:eventure/features/splash/presentation/bloc/splash_bloc.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get_it/get_it.dart';
