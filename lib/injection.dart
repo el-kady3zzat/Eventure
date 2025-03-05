@@ -1,6 +1,35 @@
-import 'package:eventure/features/events/presentation/blocs/calendar/calendar_cubit.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eventure/features/events/data/datasources/event_datasource.dart';
+import 'package:eventure/features/events/data/repositories/event_repo_impl.dart';
+import 'package:eventure/features/events/domain/repositories/event_repo.dart';
+import 'package:eventure/features/events/domain/usecases/add_to_book.dart';
+import 'package:eventure/features/events/domain/usecases/favorite_add.dart';
+import 'package:eventure/features/events/domain/usecases/favorite_remove.dart';
+import 'package:eventure/features/events/domain/usecases/get_book_ids.dart';
+import 'package:eventure/features/events/domain/usecases/get_calendar_events.dart';
+import 'package:eventure/features/events/domain/usecases/get_current_user.dart';
+import 'package:eventure/features/events/domain/usecases/get_events.dart';
+import 'package:eventure/features/events/domain/usecases/get_favorite_events.dart';
+import 'package:eventure/features/events/domain/usecases/get_favorite_ids.dart';
+import 'package:eventure/features/events/domain/usecases/get_images_list.dart';
+import 'package:eventure/features/events/domain/usecases/remove_book.dart';
+import 'package:eventure/features/events/domain/usecases/save_event/add_to_saved_ids.dart';
+import 'package:eventure/features/events/domain/usecases/save_event/get_saved_ids.dart';
+import 'package:eventure/features/events/domain/usecases/save_event/remove_from_saved_ids.dart';
+import 'package:eventure/features/events/domain/usecases/seats_availability.dart';
+import 'package:eventure/features/events/presentation/blocs/book_btn/book_btn_bloc.dart';
+import 'package:eventure/features/events/presentation/blocs/calendar/calendar_bloc.dart';
+import 'package:eventure/features/events/presentation/blocs/calendar_design/calendar_cubit.dart';
+import 'package:eventure/features/events/presentation/blocs/event/event_bloc.dart';
+import 'package:eventure/features/events/presentation/blocs/favorite/favorite_bloc.dart';
+import 'package:eventure/features/events/presentation/blocs/favorite_btn/favorite_btn_bloc.dart';
 import 'package:eventure/features/events/presentation/blocs/nav_bar/nav_bar_cubit.dart';
+import 'package:eventure/features/events/presentation/blocs/save_btn/save_btn_bloc.dart';
+import 'package:eventure/features/events/presentation/blocs/scroll/scroll_bloc.dart';
+import 'package:eventure/features/events/presentation/blocs/user_data/user_data_cubit.dart';
+import 'package:eventure/features/events/presentation/blocs/users_images/users_images_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get_it/get_it.dart';
 
 final getIt = GetIt.instance;
@@ -9,14 +38,22 @@ void init() {
   // Register FirebaseAuth instance ////////////////////////////////////////////
   getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
 
+  // Register FirebaseFirestore instance ///////////////////////////////////////
+  getIt.registerLazySingleton<FirebaseFirestore>(
+    () => FirebaseFirestore.instance,
+  );
+
+  // Register FirebaseMessaging instance ///////////////////////////////////////
+  getIt.registerLazySingleton<FirebaseMessaging>(
+    () => FirebaseMessaging.instance,
+  );
+
   /// Data Sources /////////////////////////////////////////////////////////////
-  // getIt.registerSingleton<AuthDatasource>(AuthDatasource());
+  getIt.registerSingleton<EventDatasource>(EventDatasource());
   // getIt.registerSingleton<UserDatasource>(UserDatasource());
 
   /// Repositories /////////////////////////////////////////////////////////////
-  // getIt.registerSingleton<UserRepository>(
-  //   UserRepositoryImpl(fsDatasource: getIt<UserDatasource>()),
-  // );
+  getIt.registerSingleton<EventRepo>(EventRepoImpl());
   // getIt.registerSingleton<AuthRepository>(
   //   AuthRepositoryImpl(
   //     fbDatasource: getIt<AuthDatasource>(),
@@ -25,18 +62,32 @@ void init() {
   // );
 
   /// Use Cases ////////////////////////////////////////////////////////////////
-  // getIt.registerSingleton(RegisterUser(repository: getIt<AuthRepository>()));
-  // getIt.registerSingleton(LoginUser(repository: getIt<AuthRepository>()));
-  // getIt.registerSingleton(GetUser(repository: getIt<UserRepository>()));
+  getIt.registerSingleton(GetCurrentUser());
+  getIt.registerSingleton(GetEvents());
+  getIt.registerSingleton(GetBookIds());
+  getIt.registerSingleton(SeatsAvailability());
+  getIt.registerSingleton(GetImagesList());
+  getIt.registerSingleton(AddToBook());
+  getIt.registerSingleton(RemoveBook());
+  getIt.registerSingleton(GetCalendarEvents());
+  getIt.registerSingleton(GetFavoriteIds());
+  getIt.registerSingleton(GetFavoriteEvents());
+  getIt.registerSingleton(FavoriteAdd());
+  getIt.registerSingleton(FavoriteRemove());
+  getIt.registerSingleton(GetSavedIds());
+  getIt.registerSingleton(AddToSavedIds());
+  getIt.registerSingleton(RemoveFromSavedIds());
 
   /// BLoCs ////////////////////////////////////////////////////////////////////
-  // getIt.registerFactory(
-  //   () => UserBloc(getUser: getIt<GetUser>()),
-  // );
-  // getIt.registerFactory(
-  //   () => AuthBloc(authRepository: getIt<AuthRepository>()),
-  // );
-  getIt.registerFactory(() => NavBarCubit(0));
-
+  getIt.registerFactory(() => UserDataCubit());
+  getIt.registerFactory(() => EventBloc());
+  getIt.registerFactory(() => BookBtnBloc());
+  getIt.registerFactory(() => UsersImagesBloc());
   getIt.registerFactory(() => CalendarCubit());
+  getIt.registerFactory(() => CalendarBloc());
+  getIt.registerFactory(() => NavBarCubit(0));
+  getIt.registerFactory(() => FavoriteBloc());
+  getIt.registerFactory(() => FavoriteBtnBloc());
+  getIt.registerFactory(() => SaveBtnBloc());
+  getIt.registerFactory(() => ScrollBloc());
 }
