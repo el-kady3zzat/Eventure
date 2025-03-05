@@ -1,7 +1,9 @@
-import 'package:eventure/features/events/presentation/blocs/calendar/calendar_cubit.dart';
-import 'package:eventure/features/events/presentation/widgets/calendar_page/arrow.dart';
+import 'package:eventure/core/utils/size/size_config.dart';
+import 'package:eventure/features/events/presentation/blocs/calendar_design/calendar_cubit.dart';
+import 'package:eventure/features/events/presentation/widgets/schedule_page/arrow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
 class GridHeader extends StatelessWidget {
@@ -10,6 +12,8 @@ class GridHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig.mContext = context;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -25,7 +29,7 @@ class GridHeader extends StatelessWidget {
         Text(
           DateFormat.yMMM().format(currentMonth),
           style: TextStyle(
-            fontSize: 18,
+            fontSize: SizeConfig.size(p: 16.sp, l: 6.sp),
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),

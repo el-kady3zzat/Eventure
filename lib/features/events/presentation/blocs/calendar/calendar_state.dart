@@ -1,10 +1,19 @@
-part of 'calendar_cubit.dart';
+part of 'calendar_bloc.dart';
 
-sealed class CalendarState extends Equatable {
-  const CalendarState();
+abstract class CalendarEventsState {}
 
-  @override
-  List<Object> get props => [];
+final class CalendarInitial extends CalendarEventsState {}
+
+final class CalendarLoading extends CalendarEventsState {}
+
+final class CalendarLoaded extends CalendarEventsState {
+  final List<Event> events;
+
+  CalendarLoaded({required this.events});
 }
 
-final class CalendarInitial extends CalendarState {}
+final class CalendarError extends CalendarEventsState {
+  final String msg;
+
+  CalendarError({required this.msg});
+}

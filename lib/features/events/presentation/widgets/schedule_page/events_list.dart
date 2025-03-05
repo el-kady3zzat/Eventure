@@ -1,43 +1,48 @@
+import 'package:eventure/core/utils/theme/colors.dart';
+import 'package:eventure/features/events/presentation/widgets/img.dart';
 import 'package:eventure/features/events/domain/entities/event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
 class EventsList extends StatelessWidget {
-  final List<Event> eventsOfCurrentMonth;
-  const EventsList({super.key, required this.eventsOfCurrentMonth});
+  final List<Event> events;
+  const EventsList({super.key, required this.events});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 260,
+      height: 160.h,
       child: ListView.builder(
-          // reverse: true,
-          itemCount: eventsOfCurrentMonth.length,
+          itemCount: events.length,
           itemBuilder: (context, index) {
             return Padding(
               padding: REdgeInsets.only(bottom: 8.0),
-              child: ListTile(
-                leading: SizedBox(
-                  height: 100,
-                  width: 55,
-                  child: CircleAvatar(
-                    backgroundImage: AssetImage(
-                      'assets/images/event_bg.png',
+              child: InkWell(
+                onTap: () => Navigator.of(context)
+                    .pushNamed('/details', arguments: events[index]),
+                splashColor: kHeader,
+                child: ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(200),
+                    child: SizedBox(
+                      height: 100.h,
+                      width: 55,
+                      child: Img(url: events[index].cover),
                     ),
                   ),
-                ),
-                title: Text(
-                  eventsOfCurrentMonth[index].name,
-                  style: TextStyle(color: Colors.white),
-                ),
-                trailing: Text(
-                  formatCustomDate(
-                    eventsOfCurrentMonth[index].date,
+                  title: Text(
+                    events[index].title,
+                    style: TextStyle(color: Colors.white),
                   ),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
+                  trailing: Text(
+                    formatCustomDate(
+                      events[index].dateTime,
+                    ),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ),

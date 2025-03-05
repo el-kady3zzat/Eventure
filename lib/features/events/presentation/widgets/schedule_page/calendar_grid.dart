@@ -34,17 +34,18 @@ class CalendarGrid extends StatelessWidget {
           index + 1,
         );
         bool hasEvent = events.any(
-          (event) => isSameDay(event.date, date),
+          (event) => isSameDay(event.dateTime, date),
         );
-        Event? event =
-            hasEvent ? events.firstWhere((e) => isSameDay(e.date, date)) : null;
+        Event? event = hasEvent
+            ? events.firstWhere((e) => isSameDay(e.dateTime, date))
+            : null;
 
         return GestureDetector(
           onTap: () {
             if (hasEvent) {
               if (!SizeConfig.isPortrait()) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Event: ${event!.name}")),
+                  SnackBar(content: Text("Event: ${event!.title}")),
                 );
                 return;
               }
