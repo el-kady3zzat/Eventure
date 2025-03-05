@@ -1,5 +1,6 @@
 import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/pages/add_event.dart';
+import 'package:eventure/features/admin_Dashboard/presentation/pages/events_screen.dart';
 import 'package:eventure/features/admin_Dashboard/testScreen.dart';
 import 'package:eventure/features/events/presentation/pages/home_page.dart';
 import 'package:eventure/firebase_options.dart';
@@ -51,7 +52,7 @@ class AdminApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Admin Dashboard',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: AddEvent(),
+      home: EventsScreen(),
     );
   }
 }

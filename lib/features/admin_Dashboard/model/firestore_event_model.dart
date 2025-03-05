@@ -24,22 +24,23 @@ class FSEvent {
       required this.price ,
       this.registeredUsers});
 
-  factory FSEvent.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    return FSEvent(
-        id: doc.id,
-        title: data['title'],
-        seats: data['seats'],
-        address: data['address'],
-        cover: data['cover'] ?? '',
-        dateTime: data['dateTime'],
-        description: data['description'],
-        location: data['location'],
-        price: data['price'],
-        registeredUsers: (data['registeredUsers'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList());
-  }
+factory FSEvent.fromFirestore(DocumentSnapshot doc) {
+  Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+  return FSEvent(
+      id: doc.id,
+      title: data['title'],
+      seats: data['seats'],
+      address: data['address'],
+      cover: data['cover'] ?? '',
+      dateTime: (data['dateTime'] as Timestamp).toDate(), 
+      description: data['description'],
+      location: data['location'],
+      price: data['price'],
+      registeredUsers: (data['registeredUsers'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList());
+}
+
 
   Map<String, dynamic> toFirestore() => {
         "id": id,
