@@ -2,7 +2,7 @@ import 'package:eventure/core/utils/constants/dummy_data.dart';
 import 'package:eventure/core/utils/helper/ui.dart';
 import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
-import 'package:eventure/core/utils/widgets/event_card.dart';
+import 'package:eventure/features/events/presentation/widgets/event_card.dart';
 import 'package:eventure/features/events/presentation/blocs/event/event_bloc.dart';
 import 'package:eventure/features/events/presentation/widgets/events_page/main_app_bar.dart';
 import 'package:eventure/injection.dart';
@@ -96,14 +96,14 @@ class EventsPage extends StatelessWidget {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
+      debugPrint('User granted permission');
     } else {
-      print('User declined or has not accepted permission');
+      debugPrint('User declined or has not accepted permission');
     }
   }
 
   void getDeviceToken() async {
     String? token = await FirebaseMessaging.instance.getToken();
-    print("FCM Token: $token");
+    debugPrint("FCM Token: $token");
   }
 }

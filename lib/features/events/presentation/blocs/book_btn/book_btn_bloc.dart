@@ -1,7 +1,7 @@
-import 'package:eventure/features/events/domain/usecases/add_to_book.dart';
-import 'package:eventure/features/events/domain/usecases/get_book_ids.dart';
-import 'package:eventure/features/events/domain/usecases/remove_book.dart';
-import 'package:eventure/features/events/domain/usecases/seats_availability.dart';
+import 'package:eventure/features/events/domain/usecases/booking/add_to_book.dart';
+import 'package:eventure/features/events/domain/usecases/booking/get_book_ids.dart';
+import 'package:eventure/features/events/domain/usecases/booking/remove_book.dart';
+import 'package:eventure/features/events/domain/usecases/booking/seats_availability.dart';
 import 'package:eventure/injection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,7 +16,6 @@ class BookBtnBloc extends Bloc<BookBtnEvent, BookBtnState> {
 
   BookBtnBloc() : super(BookBtnInitial()) {
     on<FetchBookIds>(_fetchBookIds);
-    // on<GetSeatsCount>(_getSeatsCount);
     on<AddToBookIds>(_addToBookIds);
     on<RemoveFromBookIds>(_removeFromBookIds);
 
@@ -33,23 +32,6 @@ class BookBtnBloc extends Bloc<BookBtnEvent, BookBtnState> {
       (eventsIds) => emit(BookBtnLoaded(eventsIds)),
     );
   }
-
-  // Future<void> _getSeatsCount(GetSeatsCount event, emit) async {
-  //   emit(BookBtnLoading());
-
-  //   await emit.forEach(
-  //     _seatsAvailability(event.eventId),
-  //     onData: (Either<Failure, bool> result) {
-  //       return result.fold(
-  //         (failure) => BookBtnError(failure.toString()),
-  //         (hasSeats) => SeatsAvailabilityLoaded(hasSeats),
-  //       );
-  //     },
-  //     onError: (error, stackTrace) {
-  //       return BookBtnError(error.toString());
-  //     },
-  //   );
-  // }
 
   Future<bool> checkSeatsAvailability(String eventId) async {
     final hasSeats = await _seatsAvailability.call(eventId);

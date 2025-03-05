@@ -29,6 +29,8 @@ class BookBtn extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        SizeConfig.mContext = context;
+
         if (state is BookBtnLoading) {
           return SizedBox(
             height: SizeConfig.size(p: 15.h, l: 20.h),

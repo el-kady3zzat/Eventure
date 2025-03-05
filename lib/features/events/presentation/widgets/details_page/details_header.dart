@@ -1,5 +1,5 @@
 import 'package:eventure/core/utils/size/size_config.dart';
-import 'package:eventure/core/utils/widgets/favorite_btn.dart';
+import 'package:eventure/features/events/presentation/widgets/favorite_btn.dart';
 import 'package:flutter/material.dart';
 
 class DetailsHeader extends StatelessWidget {

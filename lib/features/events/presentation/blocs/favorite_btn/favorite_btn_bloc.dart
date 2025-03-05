@@ -1,6 +1,6 @@
-import 'package:eventure/features/events/domain/usecases/favorite_add.dart';
-import 'package:eventure/features/events/domain/usecases/favorite_remove.dart';
-import 'package:eventure/features/events/domain/usecases/get_favorite_ids.dart';
+import 'package:eventure/features/events/domain/usecases/favorite/favorite_add.dart';
+import 'package:eventure/features/events/domain/usecases/favorite/favorite_remove.dart';
+import 'package:eventure/features/events/domain/usecases/favorite/get_favorite_ids.dart';
 import 'package:eventure/injection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

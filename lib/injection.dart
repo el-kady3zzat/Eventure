@@ -2,21 +2,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventure/features/events/data/datasources/event_datasource.dart';
 import 'package:eventure/features/events/data/repositories/event_repo_impl.dart';
 import 'package:eventure/features/events/domain/repositories/event_repo.dart';
-import 'package:eventure/features/events/domain/usecases/add_to_book.dart';
-import 'package:eventure/features/events/domain/usecases/favorite_add.dart';
-import 'package:eventure/features/events/domain/usecases/favorite_remove.dart';
-import 'package:eventure/features/events/domain/usecases/get_book_ids.dart';
+import 'package:eventure/features/events/domain/usecases/booking/add_to_book.dart';
+import 'package:eventure/features/events/domain/usecases/favorite/favorite_add.dart';
+import 'package:eventure/features/events/domain/usecases/favorite/favorite_remove.dart';
+import 'package:eventure/features/events/domain/usecases/booking/get_book_ids.dart';
 import 'package:eventure/features/events/domain/usecases/get_calendar_events.dart';
 import 'package:eventure/features/events/domain/usecases/get_current_user.dart';
 import 'package:eventure/features/events/domain/usecases/get_events.dart';
-import 'package:eventure/features/events/domain/usecases/get_favorite_events.dart';
-import 'package:eventure/features/events/domain/usecases/get_favorite_ids.dart';
+import 'package:eventure/features/events/domain/usecases/favorite/get_favorite_events.dart';
+import 'package:eventure/features/events/domain/usecases/favorite/get_favorite_ids.dart';
 import 'package:eventure/features/events/domain/usecases/get_images_list.dart';
-import 'package:eventure/features/events/domain/usecases/remove_book.dart';
+import 'package:eventure/features/events/domain/usecases/booking/remove_book.dart';
 import 'package:eventure/features/events/domain/usecases/save_event/add_to_saved_ids.dart';
 import 'package:eventure/features/events/domain/usecases/save_event/get_saved_ids.dart';
 import 'package:eventure/features/events/domain/usecases/save_event/remove_from_saved_ids.dart';
-import 'package:eventure/features/events/domain/usecases/seats_availability.dart';
+import 'package:eventure/features/events/domain/usecases/booking/seats_availability.dart';
 import 'package:eventure/features/events/presentation/blocs/book_btn/book_btn_bloc.dart';
 import 'package:eventure/features/events/presentation/blocs/calendar/calendar_bloc.dart';
 import 'package:eventure/features/events/presentation/blocs/calendar_design/calendar_cubit.dart';
@@ -50,16 +50,9 @@ void init() {
 
   /// Data Sources /////////////////////////////////////////////////////////////
   getIt.registerSingleton<EventDatasource>(EventDatasource());
-  // getIt.registerSingleton<UserDatasource>(UserDatasource());
 
   /// Repositories /////////////////////////////////////////////////////////////
   getIt.registerSingleton<EventRepo>(EventRepoImpl());
-  // getIt.registerSingleton<AuthRepository>(
-  //   AuthRepositoryImpl(
-  //     fbDatasource: getIt<AuthDatasource>(),
-  //     userRepository: getIt<UserRepository>(),
-  //   ),
-  // );
 
   /// Use Cases ////////////////////////////////////////////////////////////////
   getIt.registerSingleton(GetCurrentUser());

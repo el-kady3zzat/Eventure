@@ -1,5 +1,5 @@
 import 'package:eventure/core/utils/theme/colors.dart';
-import 'package:eventure/core/utils/widgets/img.dart';
+import 'package:eventure/features/events/presentation/widgets/img.dart';
 import 'package:eventure/features/events/domain/entities/event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

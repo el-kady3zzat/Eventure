@@ -1,7 +1,7 @@
 import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
-import 'package:eventure/core/utils/widgets/favorite_btn.dart';
-import 'package:eventure/core/utils/widgets/img.dart';
+import 'package:eventure/features/events/presentation/widgets/favorite_btn.dart';
+import 'package:eventure/features/events/presentation/widgets/img.dart';
 import 'package:eventure/features/events/domain/entities/event.dart';
 import 'package:eventure/features/events/presentation/widgets/book_btn.dart';
 import 'package:flutter/material.dart';

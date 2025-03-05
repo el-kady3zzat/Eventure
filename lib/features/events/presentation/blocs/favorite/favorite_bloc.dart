@@ -1,4 +1,4 @@
-import 'package:eventure/features/events/domain/usecases/get_favorite_events.dart';
+import 'package:eventure/features/events/domain/usecases/favorite/get_favorite_events.dart';
 import 'package:eventure/injection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:eventure/features/events/domain/entities/event.dart';
