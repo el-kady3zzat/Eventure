@@ -48,12 +48,7 @@ class HomePage extends StatelessWidget {
                 child: FavoritePage(),
               );
             } else {
-              return CalendarPage();
-            } else if (pageIndex == 3) {
               return SettingsPage();
-            }
-            else{
-              return Placeholder();
             }
           },
         ),

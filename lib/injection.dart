@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventure/features/events/data/datasources/event_datasource.dart';
 import 'package:eventure/features/events/data/repositories/event_repo_impl.dart';
@@ -37,8 +36,6 @@ import 'package:eventure/features/auth/infrastructure/biometric/local_biometric_
 import 'package:eventure/features/auth/infrastructure/firebase/firebase_auth_service.dart';
 import 'package:eventure/features/auth/infrastructure/firebase/firebase_user_repository.dart';
 import 'package:eventure/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:eventure/features/events/presentation/blocs/calendar/calendar_cubit.dart';
-import 'package:eventure/features/events/presentation/blocs/nav_bar/nav_bar_cubit.dart';
 import 'package:eventure/features/splash/presentation/bloc/splash_bloc.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -64,18 +61,16 @@ void init() {
   /// Data Sources /////////////////////////////////////////////////////////////
   getIt.registerSingleton<EventDatasource>(EventDatasource());
 
-
   getIt.registerFactory(() => SplashBloc(
-    authService: getIt<IAuthService>(),
-    userRepository: getIt<IUserRepository>(),
-  ));
+        authService: getIt<IAuthService>(),
+        userRepository: getIt<IUserRepository>(),
+      ));
+
   /// Data Sources /////////////////////////////////////////////////////////////
-  // getIt.registerSingleton<AuthDatasource>(AuthDatasource());
-  // getIt.registerSingleton<UserDatasource>(UserDatasource());
   getIt.registerFactory(() => AuthBloc(
-    authService: getIt<IAuthService>(),
-    biometricService: getIt<IBiometricService>(),
-  ));
+        authService: getIt<IAuthService>(),
+        biometricService: getIt<IBiometricService>(),
+      ));
   getIt.registerSingleton<IUserRepository>(
     FirebaseUserRepository(),
   );
@@ -89,6 +84,7 @@ void init() {
   getIt.registerSingleton<IBiometricService>(
     LocalBiometricService(),
   );
+
   /// Repositories /////////////////////////////////////////////////////////////
   getIt.registerSingleton<EventRepo>(EventRepoImpl());
 
