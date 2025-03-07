@@ -3,6 +3,8 @@ import 'package:eventure/core/utils/helper/ui.dart';
 import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
 import 'package:eventure/features/events/presentation/blocs/user_data/user_data_cubit.dart';
+import 'package:eventure/features/profile/presentation/blocs/profile_bloc/profile_bloc.dart';
+import 'package:eventure/features/profile/presentation/pages/profile_page.dart';
 import 'package:eventure/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
@@ -133,14 +135,31 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
                                   ),
                                 ),
                                 SizedBox(width: 20),
-                                SizedBox(
-                                  height: SizeConfig.size(p: 45.h, l: 85.h),
-                                  width: SizeConfig.size(p: 45.h, l: 85.h),
-                                  child: CircleAvatar(
-                                    foregroundImage: data.isEmpty
-                                        ? AssetImage('assets/images/logo.webp')
-                                        : CachedNetworkImageProvider(
-                                            data['image']),
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => BlocProvider(
+                                          create: (context) => ProfileBloc(),
+                                          child: ProfilePage(),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: SizedBox(
+                                    height: SizeConfig.size(p: 45.h, l: 85.h),
+                                    width: SizeConfig.size(p: 45.h, l: 85.h),
+                                    child: CircleAvatar(
+                                      foregroundImage: 
+                                      //data.isEmpty
+                                          //? 
+                                          AssetImage(
+                                              'assets/images/logo.webp')
+                                          // : CachedNetworkImageProvider(
+                                          //     data['image']
+                                             // ),
+                                    ),
                                   ),
                                 )
                               ],
