@@ -1,11 +1,13 @@
 // lib/application/auth/bloc/auth_bloc.dart
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventure/features/auth/domain/interfaces/auth_service.dart';
 import 'package:eventure/features/auth/domain/interfaces/biometric_service.dart';
 import 'package:eventure/features/auth/domain/models/auth_credentials.dart';
 import 'package:eventure/features/auth/domain/models/sign_up_data.dart';
+import 'package:eventure/injection.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 
 import 'auth_event.dart';
 import 'auth_states.dart';
@@ -28,9 +30,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _handleSignIn(
-      SignInRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    SignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading(message: 'Signing in...'));
 
     final credentials = AuthCredentials(
@@ -51,9 +53,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _handleSignUp(
-      SignUpRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    SignUpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     if (event.password != event.confirmPassword) {
       emit(AuthError('Passwords do not match'));
       return;
@@ -75,15 +77,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         user: result.data!,
         message: 'Welcome, ${result.data!.name}!',
       ));
+
+      // Get FCM token
+      final String? fcmToken = await getIt<FirebaseMessaging>().getToken();
+      if (fcmToken != null) {
+        // Save FCM token in Firestore
+        await getIt<FirebaseFirestore>()
+            .collection('users')
+            .doc(result.data!.id)
+            .update({'fcmToken': fcmToken});
+      }
     } else {
       emit(AuthError(result.error!));
     }
   }
 
   Future<void> _handleSignOut(
-      SignOutRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    SignOutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading(message: 'Signing out...'));
 
     final result = await _authService.signOut();
@@ -96,9 +108,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _handleBiometricAuth(
-      BiometricAuthRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    BiometricAuthRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     final isAvailable = await _biometricService.isAvailable();
     if (!isAvailable) {
       emit(BiometricAuthError('Biometric authentication is not available'));
@@ -114,9 +126,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   void _handleValidateFields(
-      ValidateFieldsRequested event,
-      Emitter<AuthState> emit,
-      ) {
+    ValidateFieldsRequested event,
+    Emitter<AuthState> emit,
+  ) {
     final List<String> emptyFields = [];
 
     if (event.name.trim().isEmpty) emptyFields.add('Full Name');

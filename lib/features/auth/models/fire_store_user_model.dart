@@ -12,6 +12,7 @@ class FSUser {
   final List<String> bookedEvents;
   final List<String> favEvents;
   final List<String> savedEvents;
+  String? fcmToken;
 
   FSUser({
     required this.uid,
@@ -25,6 +26,7 @@ class FSUser {
     List<String>? bookedEvents,
     List<String>? favEvents,
     List<String>? savedEvents,
+    this.fcmToken,
   })  : bookedEvents = bookedEvents ?? [],
         favEvents = favEvents ?? [],
         savedEvents = savedEvents ?? [];
@@ -47,18 +49,18 @@ class FSUser {
   }
 
   Map<String, dynamic> toFirestore() => {
-    "id": uid,
-    "name": name,
-    "email": email,
-    "password": password,
-    "phone": phone,
-    "image": image,
-    "location": location,
-    "role": role,
-    "bookedEvents": bookedEvents,
-    "favEvents": favEvents,
-    "savedEvents": savedEvents,
-  };
+        "id": uid,
+        "name": name,
+        "email": email,
+        "password": password,
+        "phone": phone,
+        "image": image,
+        "location": location,
+        "role": role,
+        "bookedEvents": bookedEvents,
+        "favEvents": favEvents,
+        "savedEvents": savedEvents,
+      };
 
   // Create a copy of FSUser with modified fields
   FSUser copyWith({

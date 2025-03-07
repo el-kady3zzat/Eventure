@@ -26,11 +26,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Result<UserEntity>> signup(
-      String email,
-      String password,
-      String name,
-      String phone,
-      ) async {
+    String email,
+    String password,
+    String name,
+    String phone,
+  ) async {
     final signUpData = SignUpData.builder()
         .setEmail(email)
         .setPassword(password)
