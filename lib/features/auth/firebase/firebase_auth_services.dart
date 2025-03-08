@@ -76,7 +76,7 @@ class FirebaseService {
       if (user != null) {
         // Fetch user data from Firestore
         DocumentSnapshot doc =
-        await _firestore.collection('users').doc(user.uid).get();
+            await _firestore.collection('users').doc(user.uid).get();
 
         return FSUser.fromFirestore(doc);
       }
@@ -105,7 +105,7 @@ class FirebaseService {
 
     try {
       DocumentSnapshot doc =
-      await _firestore.collection('users').doc(uid).get();
+          await _firestore.collection('users').doc(uid).get();
 
       if (doc.exists) {
         return cUser = FSUser.fromFirestore(doc);

@@ -43,6 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+# Keystore file
+*.jks
+*.keystore
+
+# Signing configs
+android/app/upload-keystore.jks
+android/app/key.properties
+
+# Ignore env file
 .env
 android/app/build.gradle
 android/app/src/main/kotlin/com/example/eventure/MainActivity.kt

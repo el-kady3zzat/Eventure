@@ -4,6 +4,7 @@ import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
 import 'package:eventure/features/events/presentation/widgets/event_card.dart';
 import 'package:eventure/features/events/presentation/blocs/favorite/favorite_bloc.dart';
+import 'package:eventure/features/events/presentation/widgets/pages_header.dart';
 import 'package:eventure/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,20 +25,7 @@ class FavoritePage extends StatelessWidget {
           height: 1.sh,
           child: Column(
             children: [
-              SizedBox(
-                height: SizeConfig.size(p: 70.h, l: 100.h),
-                child: Center(
-                  child: Text(
-                    'FAVORITES',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: SizeConfig.size(p: 18.sp, l: 18.sp),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
+              PagesHeader(title: 'FAVORITES'),
               Expanded(
                 child: BlocProvider(
                   create: (context) =>

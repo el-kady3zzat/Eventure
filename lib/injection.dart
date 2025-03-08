@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventure/features/events/data/datasources/event_datasource.dart';
 import 'package:eventure/features/events/data/repositories/event_repo_impl.dart';
+import 'package:eventure/features/events/data/repositories/notifications_repo_impl.dart';
 import 'package:eventure/features/events/domain/repositories/event_repo.dart';
+import 'package:eventure/features/events/domain/repositories/notifications_repo.dart';
 import 'package:eventure/features/events/domain/usecases/booking/add_to_book.dart';
 import 'package:eventure/features/events/domain/usecases/favorite/favorite_add.dart';
 import 'package:eventure/features/events/domain/usecases/favorite/favorite_remove.dart';
@@ -13,6 +15,9 @@ import 'package:eventure/features/events/domain/usecases/favorite/get_favorite_e
 import 'package:eventure/features/events/domain/usecases/favorite/get_favorite_ids.dart';
 import 'package:eventure/features/events/domain/usecases/get_images_list.dart';
 import 'package:eventure/features/events/domain/usecases/booking/remove_book.dart';
+import 'package:eventure/features/events/domain/usecases/notifications/get_notification_settings.dart';
+import 'package:eventure/features/events/domain/usecases/notifications/register_fcm_token.dart';
+import 'package:eventure/features/events/domain/usecases/notifications/toggle_notification_channel.dart';
 import 'package:eventure/features/events/domain/usecases/save_event/add_to_saved_ids.dart';
 import 'package:eventure/features/events/domain/usecases/save_event/get_saved_ids.dart';
 import 'package:eventure/features/events/domain/usecases/save_event/remove_from_saved_ids.dart';
@@ -24,6 +29,7 @@ import 'package:eventure/features/events/presentation/blocs/event/event_bloc.dar
 import 'package:eventure/features/events/presentation/blocs/favorite/favorite_bloc.dart';
 import 'package:eventure/features/events/presentation/blocs/favorite_btn/favorite_btn_bloc.dart';
 import 'package:eventure/features/events/presentation/blocs/nav_bar/nav_bar_cubit.dart';
+import 'package:eventure/features/events/presentation/blocs/notifications/notifications_bloc.dart';
 import 'package:eventure/features/events/presentation/blocs/save_btn/save_btn_bloc.dart';
 import 'package:eventure/features/events/presentation/blocs/scroll/scroll_bloc.dart';
 import 'package:eventure/features/events/presentation/blocs/user_data/user_data_cubit.dart';
@@ -87,6 +93,7 @@ void init() {
 
   /// Repositories /////////////////////////////////////////////////////////////
   getIt.registerSingleton<EventRepo>(EventRepoImpl());
+  getIt.registerSingleton<NotificationRepository>(NotificationRepositoryImpl());
 
   /// Use Cases ////////////////////////////////////////////////////////////////
   getIt.registerSingleton(GetCurrentUser());
@@ -104,6 +111,9 @@ void init() {
   getIt.registerSingleton(GetSavedIds());
   getIt.registerSingleton(AddToSavedIds());
   getIt.registerSingleton(RemoveFromSavedIds());
+  getIt.registerLazySingleton(() => RegisterFcmTokenUseCase());
+  getIt.registerLazySingleton(() => ToggleNotificationChannelUseCase());
+  getIt.registerLazySingleton(() => GetNotificationSettingsUseCase());
 
   /// BLoCs ////////////////////////////////////////////////////////////////////
   getIt.registerFactory(() => UserDataCubit());
@@ -117,4 +127,5 @@ void init() {
   getIt.registerFactory(() => FavoriteBtnBloc());
   getIt.registerFactory(() => SaveBtnBloc());
   getIt.registerFactory(() => ScrollBloc());
+  getIt.registerFactory(() => NotificationsBloc());
 }

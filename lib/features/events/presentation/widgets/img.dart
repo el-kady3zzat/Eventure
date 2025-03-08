@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:flutter/material.dart';
@@ -35,10 +37,15 @@ class Img extends StatelessWidget {
                     );
                   },
                 )
-              : Image.asset(
-                  'assets/images/event_bg.png',
-                  fit: BoxFit.cover,
-                ),
+              : url.isNotEmpty && url.length % 4 == 0
+                  ? Image.memory(
+                      base64Decode(url),
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      'assets/images/event_bg.png',
+                      fit: BoxFit.cover,
+                    ),
         ),
       ),
     );

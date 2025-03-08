@@ -106,4 +106,16 @@ class EventsPage extends StatelessWidget {
     String? token = await FirebaseMessaging.instance.getToken();
     debugPrint("FCM Token: $token");
   }
+
+// 👉 Call this method when the app starts or when the user logs in.
+
+//   Future<void> updateFcmToken(String userId) async {
+//   final String? fcmToken = await FirebaseMessaging.instance.getToken();
+//   if (fcmToken != null) {
+//     await FirebaseFirestore.instance
+//         .collection('users')
+//         .doc(userId)
+//         .update({'fcmToken': fcmToken});
+//   }
+// }
 }
