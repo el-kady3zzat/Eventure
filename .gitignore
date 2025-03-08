@@ -55,3 +55,5 @@ android/app/key.properties
 
 # Ignore env file
 .env
+android/app/build.gradle
+android/app/src/main/kotlin/com/example/eventure/MainActivity.kt
