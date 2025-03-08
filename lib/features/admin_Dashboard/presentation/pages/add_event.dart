@@ -93,7 +93,7 @@ class _AddEventState extends State<AddEvent> {
               child: ListView(
                 children: [
                   SizedBox(
-                    height: 50,
+                    height: 30,
                   ),
                   Center(
                     child: Text(
@@ -205,6 +205,7 @@ class _AddEventState extends State<AddEvent> {
                           hint: "Price (\$)",
                           controller: priceController,
                           keyboardType: TextInputType.number,
+                          onlyDigits: true,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return "Price is required";

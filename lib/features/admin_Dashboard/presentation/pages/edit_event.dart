@@ -93,7 +93,7 @@ class _EditEventState extends State<EditEvent> {
 
   Future<void> _updateEvent() async {
     if (!_formKey.currentState!.validate()) {
-      return; 
+      return;
     }
 
     try {
@@ -130,7 +130,17 @@ class _EditEventState extends State<EditEvent> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kMainDark,
-      appBar: AppBar(title: Text("Edit Event")),
+      appBar: AppBar(
+        title: Text(
+          "Edit Event",
+          style: TextStyle(
+              fontSize: 30, color: white, fontWeight: FontWeight.w900),
+        ),
+        backgroundColor: kMainDark,
+        iconTheme: IconThemeData(
+          color: Colors.white,
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 200),
         child: Form(
@@ -146,6 +156,7 @@ class _EditEventState extends State<EditEvent> {
                   decoration: BoxDecoration(
                     color: kMainLight,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: kButton2, width: 0.2),
                     image: _webImage != null
                         ? DecorationImage(
                             image: MemoryImage(_webImage!), fit: BoxFit.cover)
@@ -155,7 +166,7 @@ class _EditEventState extends State<EditEvent> {
                                 fit: BoxFit.cover)
                             : null,
                   ),
-                  child: _webImage == null && widget.event.cover == null
+                  child: _webImage == null
                       ? const Center(
                           child:
                               Icon(Icons.image, size: 50, color: Colors.white))
@@ -180,9 +191,11 @@ class _EditEventState extends State<EditEvent> {
                   hint: "Location 'URL'", controller: locationController),
               const SizedBox(height: 20),
               CustomEventTextField(
-                  hint: "Price (\$)",
-                  controller: priceController,
-                  keyboardType: TextInputType.number),
+                hint: "Price (\$)",
+                controller: priceController,
+                keyboardType: TextInputType.number,
+                onlyDigits: true,
+              ),
               const SizedBox(height: 20),
               CustomEventTextField(
                 hint: "Address",

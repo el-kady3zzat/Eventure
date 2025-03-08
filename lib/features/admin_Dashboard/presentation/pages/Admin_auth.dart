@@ -5,14 +5,14 @@ import 'package:eventure/features/admin_Dashboard/presentation/widgets/event_tex
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class SignUpAdmin extends StatefulWidget {
-  const SignUpAdmin({super.key});
+class AdminAuth extends StatefulWidget {
+  const AdminAuth({super.key});
 
   @override
-  State<SignUpAdmin> createState() => _SignUpAdminState();
+  State<AdminAuth> createState() => _AdminAuthState();
 }
 
-class _SignUpAdminState extends State<SignUpAdmin> {
+class _AdminAuthState extends State<AdminAuth> {
   bool hiddenpass = true;
   bool isSignUp = true;
   bool hiddenConfirmPass = true;

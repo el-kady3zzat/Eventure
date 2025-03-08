@@ -31,6 +31,7 @@ class WebEventCard extends StatelessWidget {
                 child: Card(
                   margin: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
+                    side: BorderSide(color: kButton, width: 1.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: ClipRRect(
@@ -55,9 +56,9 @@ class WebEventCard extends StatelessWidget {
                       onPressed: () {
                         context.read<EventsCubit>().deleteEvent(event.id);
                       },
-                      icon: const Icon(
-                        Icons.delete_forever_outlined,
-                        color: Colors.red,
+                      icon: Icon(
+                        Icons.delete,
+                        color: kButton,
                       ),
                     ),
                   ),
@@ -65,7 +66,6 @@ class WebEventCard extends StatelessWidget {
                     height: 80,
                     margin: const EdgeInsets.symmetric(horizontal: 15),
                     child: Card(
-                      elevation: 10,
                       shadowColor: kHeader,
                       margin: EdgeInsets.zero,
                       color: kDetails,
@@ -83,28 +83,28 @@ class WebEventCard extends StatelessWidget {
                               children: [
                                 Text(
                                   event.title,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: white,
                                   ),
                                 ),
                                 Row(
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.calendar_today_rounded,
-                                          color: Colors.white,
+                                          color: white,
                                           size: 20,
                                         ),
                                         const SizedBox(width: 10),
                                         Text(
                                           formattedDate,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.white,
+                                            color: white,
                                           ),
                                         ),
                                       ],
@@ -112,18 +112,18 @@ class WebEventCard extends StatelessWidget {
                                     const SizedBox(width: 20),
                                     Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.access_time_rounded,
-                                          color: Colors.white,
+                                          color: white,
                                           size: 20,
                                         ),
                                         const SizedBox(width: 10),
                                         Text(
                                           formattedTime,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.white,
+                                            color: white,
                                           ),
                                         ),
                                       ],

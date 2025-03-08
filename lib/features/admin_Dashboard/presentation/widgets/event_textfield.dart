@@ -1,5 +1,6 @@
 import 'package:eventure/core/utils/theme/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomEventTextField extends StatelessWidget {
   final String hint;
@@ -12,6 +13,7 @@ class CustomEventTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final bool obscureText;
   final Widget? suffixIcon;
+  final bool onlyDigits;
 
   const CustomEventTextField({
     super.key,
@@ -25,6 +27,7 @@ class CustomEventTextField extends StatelessWidget {
     this.validator,
     this.obscureText = false,
     this.suffixIcon,
+    this.onlyDigits = false,
   });
 
   @override
@@ -39,6 +42,8 @@ class CustomEventTextField extends StatelessWidget {
       cursorColor: white,
       style: TextStyle(color: white),
       validator: validator,
+      inputFormatters:
+          onlyDigits ? [FilteringTextInputFormatter.digitsOnly] : [],
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: lightWhite),
