@@ -1,3 +1,4 @@
+import 'package:eventure/features/admin_Dashboard/Logic/notifications_handler.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/Cubit/events/events_cubit.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/pages/add_event.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/widgets/event_card.dart';
@@ -21,12 +22,12 @@ class EventsScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: FilledButton(
                 onPressed: () async {
-                  // await NotificationService().sendNotificationToAll();
+                  await NotificationService().sendNotificationToAll();
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AddEvent()),
-                  );
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) => AddEvent()),
+                  // );
                 },
                 child: const Text("Add Event"),
               ),
