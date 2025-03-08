@@ -4,9 +4,11 @@ import 'package:eventure/core/errors/failure.dart';
 import 'package:eventure/core/utils/helper/firebase.dart';
 import 'package:eventure/features/events/data/models/event_model.dart';
 import 'package:eventure/injection.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class EventDatasource {
   final db = getIt<FirebaseFirestore>();
+  final messaging = getIt<FirebaseMessaging>();
   List<EventModel> _events = [];
   Map<String, dynamic> userData = {};
 
@@ -16,9 +18,10 @@ class EventDatasource {
         final userDoc = await db.collection('users').doc(currentUserId).get();
 
         userData = {
-          'name': userDoc.data()!['name'],
-          'image': userDoc.data()!['image'],
-          'location': userDoc.data()!['location'],
+          'name': userDoc.data()!['name'] ?? '',
+          'image': userDoc.data()!['image'] ?? '',
+          'location': userDoc.data()!['location'] ?? '',
+          'fcmToken': userDoc.data()!['fcmToken'] ?? '',
         };
       }
 
@@ -165,6 +168,44 @@ class EventDatasource {
         return Left(EventFailure(e.toString()));
       }
     });
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  /// Handle Notifications
+
+  Future<void> registerFcmToken() async {
+    final String? token = await messaging.getToken();
+    // if (token != null) {
+    await db.collection('users').doc(currentUserId).update({
+      'fcm_token': token,
+    });
+    // }
+  }
+
+  Future<void> toggleNotificationChannel(
+    String channelId,
+    bool isEnabled,
+  ) async {
+    final doc =
+        await db.collection('notification_settings').doc(currentUserId).get();
+    if (doc.exists && doc.data() != null) {
+      db.collection('notification_settings').doc(currentUserId).update({
+        channelId: isEnabled,
+      });
+    } else {
+      db.collection('notification_settings').doc(currentUserId).set({
+        channelId: isEnabled,
+      });
+    }
+  }
+
+  Future<Map<String, bool>> getNotificationSettings() async {
+    final doc =
+        await db.collection('notification_settings').doc(currentUserId).get();
+    if (doc.exists && doc.data() != null) {
+      return Map<String, bool>.from(doc.data()!);
+    }
+    return {};
   }
 
   //////////////////////////////////////////////////////////////////////////////

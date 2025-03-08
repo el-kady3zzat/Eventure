@@ -87,6 +87,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             .doc(result.data!.id)
             .update({'fcmToken': fcmToken});
       }
+      // Save Notification Settings in Firestore
+      await getIt<FirebaseFirestore>()
+          .collection('notification_settings')
+          .doc(result.data!.id)
+          .set({
+        'booked_events_channel': true,
+        'favorite_events_channel': true,
+        'general_channel': true,
+      });
     } else {
       emit(AuthError(result.error!));
     }
