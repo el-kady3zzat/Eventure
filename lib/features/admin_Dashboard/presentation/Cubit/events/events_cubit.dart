@@ -1,6 +1,5 @@
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eventure/features/admin_Dashboard/Logic/notifications_handler.dart';
 import 'package:eventure/features/admin_Dashboard/model/firestore_event_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

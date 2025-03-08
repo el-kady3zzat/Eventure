@@ -3,7 +3,6 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -34,8 +33,8 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static FirebaseOptions web = FirebaseOptions(
-    apiKey: dotenv.env['WEB_API_KEY']!,
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCQYmR_uUaL35IJ7PTVAWLVlHNtiAlmDvs',
     appId: '1:468272272410:web:eacfe950c740abb8cfada3',
     messagingSenderId: '468272272410',
     projectId: 'eventure-b3ff2',
@@ -44,16 +43,16 @@ class DefaultFirebaseOptions {
     measurementId: 'G-F6TCWM82VP',
   );
 
-  static FirebaseOptions android = FirebaseOptions(
-    apiKey: dotenv.env['ANDROID_API_KEY']!,
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyAI_VV8yGn_zQFV76yVHFEM0d_MDGUvdBg',
     appId: '1:468272272410:android:480cd888641704f5cfada3',
     messagingSenderId: '468272272410',
     projectId: 'eventure-b3ff2',
     storageBucket: 'eventure-b3ff2.firebasestorage.app',
   );
 
-  static FirebaseOptions ios = FirebaseOptions(
-    apiKey: dotenv.env['IOS_API_KEY']!,
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyAQT6mqRdMFGQ-fpL3LnLZOjeLOwQJmuYY',
     appId: '1:468272272410:ios:ee650aa2879ed088cfada3',
     messagingSenderId: '468272272410',
     projectId: 'eventure-b3ff2',
@@ -61,8 +60,8 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.eventure',
   );
 
-  static FirebaseOptions macos = FirebaseOptions(
-    apiKey: dotenv.env['MACOS_API_KEY']!,
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyAQT6mqRdMFGQ-fpL3LnLZOjeLOwQJmuYY',
     appId: '1:468272272410:ios:ed7e09c9dc73c48fcfada3',
     messagingSenderId: '468272272410',
     projectId: 'eventure-b3ff2',

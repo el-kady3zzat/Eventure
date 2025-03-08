@@ -1,4 +1,3 @@
-import 'package:eventure/features/admin_Dashboard/Logic/notifications_handler.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/Cubit/events/events_cubit.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/pages/add_event.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/widgets/event_card.dart';
