@@ -43,19 +43,18 @@ class NotificationService {
     return credentials.accessToken.data;
   }
 
- Future<List<String>> getUsersTokens() async {
-  QuerySnapshot usersSnapshot =
-      await FirebaseFirestore.instance.collection("users").get();
+  Future<List<String>> getUsersTokens() async {
+    QuerySnapshot usersSnapshot =
+        await FirebaseFirestore.instance.collection("users").get();
 
-  List<String> tokens = usersSnapshot.docs
-      .map((doc) => doc.data() as Map<String, dynamic>?)
-      .where((data) => data != null && data.containsKey("fcmToken"))
-      .map((data) => data!["fcmToken"] as String)
-      .toList();
+    List<String> tokens = usersSnapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>?)
+        .where((data) => data != null && data.containsKey("fcmToken"))
+        .map((data) => data!["fcmToken"] as String)
+        .toList();
 
-  return tokens;
-}
-
+    return tokens;
+  }
 
   Future<List<String>> getRegisteredUsersTokens(String eventId) async {
     DocumentSnapshot eventSnapshot = await FirebaseFirestore.instance
@@ -160,6 +159,90 @@ class NotificationService {
         print('Notification sent successfully to $token');
       } else {
         print('Failed to send notification to $token: ${response.body}');
+      }
+    }
+  }
+
+  Future<void> sendNotificationToRegisteredUsers(String eventId) async {
+    final String accessToken = await getAccessToken();
+    List<String> tokens = await getRegisteredUsersTokens(eventId);
+
+    if (tokens.isEmpty) {
+      print("No registered users found for this event.");
+      return;
+    }
+
+    for (String token in tokens) {
+      final Map<String, dynamic> message = {
+        "message": {
+          "token": token,
+          "notification": {
+            "title": "Event Reminder!",
+            "body": "An event you registered for is coming up. Don’t miss it!"
+          },
+          "android": {
+            "notification": {"channel_id": "booked_events_channel"}
+          }
+        }
+      };
+
+      final response = await http.post(
+        Uri.parse(
+            'https://fcm.googleapis.com/v1/projects/eventure-b3ff2/messages:send'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken'
+        },
+        body: jsonEncode(message),
+      );
+
+      if (response.statusCode == 200) {
+        print('Notification sent successfully to registered user $token');
+      } else {
+        print(
+            'Failed to send notification to registered user $token: ${response.body}');
+      }
+    }
+  }
+
+  Future<void> sendNotificationToLikedUsers(String eventId) async {
+    final String accessToken = await getAccessToken();
+    List<String> tokens = await getLikedUsersTokens(eventId);
+
+    if (tokens.isEmpty) {
+      print("No liked users found for this event.");
+      return;
+    }
+
+    for (String token in tokens) {
+      final Map<String, dynamic> message = {
+        "message": {
+          "token": token,
+          "notification": {
+            "title": "Event Reminder! ⏳",
+            "body": "An event you liked is starting tomorrow! Book it now."
+          },
+          "android": {
+            "notification": {"channel_id": "favorite_events_channel"}
+          }
+        }
+      };
+
+      final response = await http.post(
+        Uri.parse(
+            'https://fcm.googleapis.com/v1/projects/eventure-b3ff2/messages:send'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken'
+        },
+        body: jsonEncode(message),
+      );
+
+      if (response.statusCode == 200) {
+        print('Notification sent successfully to liked user $token');
+      } else {
+        print(
+            'Failed to send notification to liked user $token: ${response.body}');
       }
     }
   }
