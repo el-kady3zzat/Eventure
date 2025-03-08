@@ -22,12 +22,12 @@ class EventsScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: FilledButton(
                 onPressed: () async {
-                  await NotificationService().sendNotificationToAll();
+                  // await NotificationService().sendNotificationToAll();
 
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(builder: (context) => AddEvent()),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddEvent()),
+                  );
                 },
                 child: const Text("Add Event"),
               ),

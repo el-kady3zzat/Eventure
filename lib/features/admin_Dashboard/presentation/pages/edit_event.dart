@@ -36,7 +36,7 @@ class _EditEventState extends State<EditEvent> {
   void initState() {
     super.initState();
     titleController = TextEditingController(text: widget.event.title);
-    selectedDateTime = widget.event.dateTime; // Set initial date value
+    selectedDateTime = widget.event.dateTime;
     dateTimeController = TextEditingController(
         text: DateFormat('yyyy-MM-dd HH:mm').format(selectedDateTime!));
     descriptionController =
@@ -92,35 +92,37 @@ class _EditEventState extends State<EditEvent> {
   }
 
   Future<void> _updateEvent() async {
-    if (_formKey.currentState!.validate()) {
-      FirebaseFirestore.instance
+    if (!_formKey.currentState!.validate()) {
+      return; 
+    }
+
+    try {
+      final updatedEvent = {
+        "title": titleController.text.trim(),
+        "dateTime": selectedDateTime ?? widget.event.dateTime,
+        "description": descriptionController.text.trim(),
+        "location": locationController.text.trim(),
+        "price": priceController.text.trim(),
+        "seats": int.tryParse(seatsController.text) ?? widget.event.seats,
+        "address": addressController.text.trim(),
+        "cover":
+            _webImage != null ? base64Encode(_webImage!) : widget.event.cover,
+      };
+
+      await FirebaseFirestore.instance
           .collection("events")
           .doc(widget.event.id)
-          .update({
-        "title": titleController.text,
-        "dateTime": Timestamp.fromDate(selectedDateTime!),
-        "description": descriptionController.text,
-        "location": locationController.text,
-        "price": double.tryParse(priceController.text) ?? 0.0,
-        "seats": int.tryParse(seatsController.text) ?? 0,
-        "address": addressController.text,
-        "cover": coverController.text,
-      }).then((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Event updated successfully!")),
-        );
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EventsScreen(),
-          ),
-          (route) => false,
-        );
-      }).catchError((error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error updating event: $error")),
-        );
-      });
+          .update(updatedEvent);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Event updated successfully!")),
+      );
+
+      Navigator.pop(context, true);
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to update event: $error")),
+      );
     }
   }
 

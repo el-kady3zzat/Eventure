@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eventure/features/admin_Dashboard/Logic/notifications_handler.dart';
 import 'package:eventure/features/admin_Dashboard/model/firestore_event_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,22 +9,16 @@ part 'events_state.dart';
 class EventsCubit extends Cubit<EventsState> {
   EventsCubit() : super(EventsInitial());
 
-  // Stream<List<FSEvent>> getEventsStream() {
-  //   return FirebaseFirestore.instance.collection('events').snapshots().map(
-  //         (snapshot) =>
-  //             snapshot.docs.map((doc) => FSEvent.fromFirestore(doc)).toList(),
-  //       );
-  // }
   void fetchEvents() {
-    emit(EventsLoading());
+    if (!isClosed) emit(EventsLoading());
     FirebaseFirestore.instance.collection('events').snapshots().listen(
       (snapshot) {
         final events =
             snapshot.docs.map((doc) => FSEvent.fromFirestore(doc)).toList();
-        emit(EventsLoaded(events));
+        if (!isClosed) emit(EventsLoaded(events));
       },
       onError: (error) {
-        emit(EventsError(error.toString()));
+        if (!isClosed) emit(EventsError(error.toString()));
       },
     );
   }
@@ -35,7 +30,7 @@ class EventsCubit extends Cubit<EventsState> {
           .doc(eventId)
           .delete();
     } catch (error) {
-      emit(EventsError("Failed to delete event: $error"));
+      if (!isClosed) emit(EventsError("Failed to delete event: $error"));
     }
   }
 
@@ -49,7 +44,7 @@ class EventsCubit extends Cubit<EventsState> {
     required String location,
     required String cover,
   }) async {
-    emit(AddEventLoading());
+    if (!isClosed) emit(AddEventLoading());
 
     var db = FirebaseFirestore.instance;
     DocumentReference docRef = db.collection("events").doc();
@@ -73,11 +68,11 @@ class EventsCubit extends Cubit<EventsState> {
         "likedUsers": [],
       });
 
-      // await NotificationService().sendNotificationToAll();
+      await NotificationService().sendNotificationToAll();
 
-      emit(AddEventSuccess());
+      if (!isClosed) emit(AddEventSuccess());
     } catch (e) {
-      emit(AddEventError(e.toString()));
+      if (!isClosed) emit(AddEventError(e.toString()));
     }
   }
 }
