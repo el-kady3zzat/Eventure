@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/Cubit/events/events_cubit.dart';
 import 'package:eventure/features/admin_Dashboard/presentation/pages/events_screen.dart';
@@ -67,7 +66,6 @@ class _AddEventState extends State<AddEvent> {
 
     if (pickedFile != null) {
       if (kIsWeb) {
-        // Web: Store image in Uint8List
         Uint8List imageBytes = await pickedFile.readAsBytes();
         setState(() {
           _webImage = imageBytes;
@@ -328,17 +326,15 @@ class _AddEventState extends State<AddEvent> {
                                   return;
                                 }
 
-                   
-
-                                // context.read<EventsCubit>().addEvent(
-                                //     address: addressController.text,
-                                //     title: titleController.text,
-                                //     seats: seatsController.text,
-                                //     selectedDateTime: ,
-                                //     description: descriptionController.text,
-                                //     price: priceController.text,
-                                //     location: locationController.text,
-                                //     cover: coverController.text);
+                                context.read<EventsCubit>().addEvent(
+                                    address: addressController.text,
+                                    title: titleController.text,
+                                    seats: seatsController.text,
+                                    selectedDateTime: selectedDateTime!,
+                                    description: descriptionController.text,
+                                    price: priceController.text,
+                                    location: locationController.text,
+                                    cover: coverController.text);
                               }
                             },
                             style: ElevatedButton.styleFrom(

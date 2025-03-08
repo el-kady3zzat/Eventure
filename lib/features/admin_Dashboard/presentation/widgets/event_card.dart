@@ -53,7 +53,7 @@ class WebEventCard extends StatelessWidget {
                     ),
                     child: IconButton(
                       onPressed: () {
-                        // context.read<EventsCubit>().
+                        context.read<EventsCubit>().deleteEvent(event.id);
                       },
                       icon: const Icon(
                         Icons.delete_forever_outlined,
