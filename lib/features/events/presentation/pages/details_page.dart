@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
@@ -27,10 +29,15 @@ class DetailsPage extends StatelessWidget {
                   SizedBox(
                     width: SizeConfig.size(p: 1.sw, l: 1.sw),
                     height: SizeConfig.size(p: 0.6.sh, l: 1.sw),
-                    child: CachedNetworkImage(
-                      imageUrl: event.cover,
-                      fit: BoxFit.cover,
-                    ),
+                    child: isValidUrl(event.cover)
+                        ? CachedNetworkImage(
+                            imageUrl: event.cover,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.memory(
+                            base64Decode(event.cover),
+                            fit: BoxFit.cover,
+                          ),
                   ),
                   DetailsContainer(event: event),
                   DetailsHeader(eventId: event.id),
@@ -74,5 +81,14 @@ class DetailsPage extends StatelessWidget {
               ),
       ),
     );
+  }
+
+  static bool isValidUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.hasScheme && uri.hasAuthority;
+    } catch (e) {
+      return false;
+    }
   }
 }
