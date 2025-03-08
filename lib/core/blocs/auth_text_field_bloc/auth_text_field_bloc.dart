@@ -1,7 +1,5 @@
-// lib/bloc/auth_text_field_bloc/auth_text_field_bloc.dart
-
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'auth_text_field_event.dart';
 import 'auth_text_field_states.dart';
 
@@ -9,11 +7,11 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
   String _password = '';
   String _confirmPassword = '';
   final Map<String, bool> _passwordRequirements = {
-    'At least 8 characters': false,
-    'Contains uppercase letter': false,
-    'Contains lowercase letter': false,
-    'Contains number': false,
-    'Contains special character': false,
+    'auth.validation.password.requirements.length'.tr(): false,
+    'auth.validation.password.requirements.uppercase'.tr(): false,
+    'auth.validation.password.requirements.lowercase'.tr(): false,
+    'auth.validation.password.requirements.number'.tr(): false,
+    'auth.validation.password.requirements.special'.tr(): false,
   };
 
   AuthTextFieldBloc() : super(const AuthTextFieldInitial()) {
@@ -31,7 +29,7 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
     bool isValid = true;
 
     if (event.text.isEmpty && event.fieldType != 'phone') {
-      errorMessage = 'This field is required';
+      errorMessage = 'auth.validation.required'.tr();
       showError = true;
       isValid = false;
     } else {
@@ -39,7 +37,6 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
         case 'password':
           _password = event.text;
           if (event.text.isEmpty) {
-            // If field is empty, reset requirements and don't show them
             _resetPasswordRequirements();
             isValid = false;
             showError = false;
@@ -48,15 +45,13 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
               obscureText: state.obscureText,
               errorMessage: errorMessage,
               showError: showError,
-              passwordRequirements: null, // Set to null to hide container
+              passwordRequirements: null,
             ));
           } else {
-            // Update requirements first
             _updatePasswordRequirements(event.text);
             isValid = _isValidPassword(event.text);
             showError = false;
 
-            // Check if all requirements are met
             final allRequirementsMet = _passwordRequirements.values.every((met) => met);
 
             emit(AuthTextFieldValidation(
@@ -64,7 +59,6 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
               obscureText: state.obscureText,
               errorMessage: errorMessage,
               showError: showError,
-              // Show requirements only if not all are met
               passwordRequirements: allRequirementsMet ? null : Map<String, bool>.from(_passwordRequirements),
             ));
           }
@@ -101,10 +95,25 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
           break;
 
         case 'phone':
-          if (!_isValidPhone(event.text)) {
-            errorMessage = _getPhoneError(event.text);
-            showError = true;
-            isValid = false;
+          if (event.text.isNotEmpty) {
+            final cleanPhone = event.text.replaceAll(' ', '');
+            if (!_isValidPhone(cleanPhone)) {
+              errorMessage = _getPhoneError(cleanPhone);
+              showError = true;
+              isValid = false;
+            } else {
+              if (cleanPhone.startsWith('+')) {
+                isValid = cleanPhone.length >= 12 && cleanPhone.length <= 13;
+              } else {
+                isValid = cleanPhone.length == 11;
+              }
+              showError = !isValid;
+              errorMessage = showError ? _getPhoneError(cleanPhone) : null;
+            }
+          } else {
+            isValid = true;
+            showError = false;
+            errorMessage = null;
           }
           break;
       }
@@ -154,13 +163,12 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
   }
 
   void _updatePasswordRequirements(String value) {
-    // Create a new map to ensure state change detection
     final newRequirements = <String, bool>{
-      'At least 8 characters': value.length >= 8,
-      'Contains uppercase letter': value.contains(RegExp(r'[A-Z]')),
-      'Contains lowercase letter': value.contains(RegExp(r'[a-z]')),
-      'Contains number': value.contains(RegExp(r'[0-9]')),
-      'Contains special character': value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]')),
+      'auth.validation.password.requirements.length'.tr(): value.length >= 8,
+      'auth.validation.password.requirements.uppercase'.tr(): value.contains(RegExp(r'[A-Z]')),
+      'auth.validation.password.requirements.lowercase'.tr(): value.contains(RegExp(r'[a-z]')),
+      'auth.validation.password.requirements.number'.tr(): value.contains(RegExp(r'[0-9]')),
+      'auth.validation.password.requirements.special'.tr(): value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]')),
     };
 
     _passwordRequirements.clear();
@@ -179,13 +187,13 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
   }
 
   String? _getNameError(String value) {
-    if (value.isEmpty) return 'Please enter your full name';
+    if (value.isEmpty) return 'auth.validation.name.required'.tr();
     if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-      return 'Name should only contain letters';
+      return 'auth.validation.name.letters_only'.tr();
     }
-    if (value.length < 3) return 'Name should be at least 3 characters';
+    if (value.length < 3) return 'auth.validation.name.min_length'.tr();
     if (value[0].toUpperCase() != value[0]) {
-      return 'First letter must be capitalized';
+      return 'auth.validation.name.capitalize'.tr();
     }
     return null;
   }
@@ -195,16 +203,35 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
   }
 
   String? _getEmailError(String value) {
-    if (value.isEmpty) return 'Please enter your email';
-    return 'Please enter a valid email address';
+    if (value.isEmpty) return 'auth.validation.email.required'.tr();
+    return 'auth.validation.email.invalid'.tr();
   }
 
   bool _isValidPhone(String value) {
-    return value.isEmpty || RegExp(r'^[0-9]{11}$').hasMatch(value);
+    if (value.isEmpty) return false;
+    value = value.replaceAll(' ', '');
+    if (!value.startsWith('+2')) return false;
+    if (value.length != 13) return false;
+    return RegExp(r'^\+2[0-9]{11}$').hasMatch(value);
   }
 
   String? _getPhoneError(String value) {
-    return 'Phone number must be exactly 11 digits';
+    if (value.isEmpty) return null;
+    value = value.replaceAll(' ', '');
+    if (!value.startsWith('+2')) {
+      return 'auth.validation.phone.prefix'.tr();
+    }
+    if (!RegExp(r'^\+2[0-9]+$').hasMatch(value)) {
+      return 'auth.validation.phone.digits_only'.tr();
+    }
+    String digitsAfterPrefix = value.substring(2);
+    if (digitsAfterPrefix.length < 11) {
+      return 'auth.validation.phone.exact_length'.tr();
+    }
+    if (digitsAfterPrefix.length > 11) {
+      return 'auth.validation.phone.max_length'.tr();
+    }
+    return null;
   }
 
   bool _isValidPassword(String value) {
@@ -217,14 +244,6 @@ class AuthTextFieldBloc extends Bloc<AuthTextFieldEvent, AuthTextFState> {
   }
 
   String? _getConfirmPasswordError(String value) {
-    return 'Passwords do not match';
-  }
-
-  void emitAuthSuccess(String message) {
-    emit(AuthSuccess(message: message));
-  }
-
-  void emitAuthError(String message) {
-    emit(AuthError(message: message));
+    return 'auth.validation.password.not_match'.tr();
   }
 }

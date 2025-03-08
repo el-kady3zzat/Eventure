@@ -16,7 +16,7 @@ class AuthenticationLoadingDialog extends StatelessWidget {
       child: Container(
         padding: REdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDarkMode ? kMainDark : Colors.white,
+          color: isDarkMode ? kMainDark : kMainLight,
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
@@ -31,7 +31,7 @@ class AuthenticationLoadingDialog extends StatelessWidget {
           children: [
             CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(
-                isDarkMode ? Colors.white : kMainDark,
+                isDarkMode ? kMainLight : kMainDark,
               ),
             ),
             SizedBox(height: 16.h),
@@ -39,7 +39,7 @@ class AuthenticationLoadingDialog extends StatelessWidget {
               'Authenticating...',
               style: TextStyle(
                 fontSize: 16.sp,
-                color: isDarkMode ? Colors.white : Colors.black,
+                color: isDarkMode ? kMainLight : kMainDark,
               ),
             ),
           ],

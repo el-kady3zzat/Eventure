@@ -91,3 +91,55 @@ class ResetPasswordRequested extends AuthEvent {
   @override
   List<Object> get props => [email];
 }
+class ValidateSignUpFields extends AuthEvent {
+  final String name;
+  final String email;
+  final String password;
+  final String confirmPassword;
+  final String phone;
+
+  ValidateSignUpFields({
+    required this.name,
+    required this.email,
+    required this.password,
+    required this.confirmPassword,
+    required this.phone,
+  });
+}
+class ValidateLoginFields extends AuthEvent {
+  final String email;
+  final String password;
+
+  ValidateLoginFields({
+    required this.email,
+    required this.password,
+  });
+  @override
+  List<Object> get props => [email, password];
+}
+
+
+class ResendCodeRequested extends AuthEvent {
+  final String phoneNumber;
+
+  const ResendCodeRequested({required this.phoneNumber});
+
+  @override
+  List<Object> get props => [phoneNumber];
+}
+class CheckUserDataAvailability extends AuthEvent {
+  final String name;
+  final String email;
+  final String password;
+  final String confirmPassword;
+  final String phone;
+
+  CheckUserDataAvailability({
+    required this.name,
+    required this.email,
+    required this.password,
+    required this.confirmPassword,
+    required this.phone,
+  });
+}
+

@@ -50,12 +50,7 @@ class ValidationError extends AuthState {
   ValidationError(this.message);
 }
 
-// New states
-class PhoneNumberVerificationSent extends AuthState {
-  final String message;
 
-  PhoneNumberVerificationSent(this.message);
-}
 
 class OTPVerificationSuccess extends AuthState {
   final UserEntity user;
@@ -78,7 +73,11 @@ class ResetPasswordEmailSent extends AuthState {
 
   ResetPasswordEmailSent(this.message);
 }
+class ResetPasswordSuccess extends AuthState {
+  final String message;
 
+  ResetPasswordSuccess({required this.message});
+}
 class ResetPasswordError extends AuthState {
   final String message;
 
@@ -99,4 +98,32 @@ class GoogleSignInError extends AuthState {
   final String message;
 
   GoogleSignInError(this.message);
+}
+
+
+class PhoneVerificationInProgress extends AuthState {
+  final String verificationId;
+  final int? resendToken;
+  PhoneVerificationInProgress(this.verificationId, this.resendToken);
+}
+
+class CodeSentState extends AuthState {
+  final bool isCodeSent;
+  final String phoneNumber;
+
+  CodeSentState({
+    required this.isCodeSent,
+    required this.phoneNumber,
+  });
+}
+class PhoneNumberVerificationSent extends AuthState {
+  final String message;
+  final String phoneNumber;
+  final bool isCodeSent;
+
+  PhoneNumberVerificationSent(
+      this.message, {
+        required this.phoneNumber,
+        this.isCodeSent = true,
+      });
 }

@@ -1,20 +1,26 @@
-// lib/presentation/auth/screens/login_screen.dart
-
+import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
+import 'package:eventure/core/utils/theme/theme_cubit/theme_cubit.dart';
 import 'package:eventure/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:eventure/features/auth/presentation/bloc/auth_event.dart';
 import 'package:eventure/features/auth/presentation/bloc/auth_states.dart';
+import 'package:eventure/features/auth/presentation/pages/reset_password.dart';
 import 'package:eventure/features/auth/presentation/pages/signup_screen.dart';
 import 'package:eventure/features/auth/presentation/widgets/auth_text_field.dart';
 import 'package:eventure/features/auth/presentation/widgets/custom_button.dart';
-import 'package:eventure/features/auth/presentation/widgets/custom_snack_bar.dart';
 import 'package:eventure/features/auth/presentation/widgets/loading_overlay.dart';
 import 'package:eventure/features/events/presentation/pages/home_page.dart';
 import 'package:eventure/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+import 'package:easy_localization/easy_localization.dart';
+import 'package:eventure/core/utils/helper/ui.dart';
+
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -49,292 +55,488 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthLoading) {
-          CustomSnackBar.showInfo(
-            context: context,
-            message: state.message,
-            duration: const Duration(milliseconds: 1500),
-          );
-        } else if (state is AuthSuccess ||
-            state is GoogleSignInSuccess ||
-            state is OTPVerificationSuccess) {
-          CustomSnackBar.showSuccess(
-            context: context,
-            message: state is AuthSuccess
-                ? state.message
-                : state is GoogleSignInSuccess
-                ? state.message
-                : (state as OTPVerificationSuccess).message,
-            duration: const Duration(milliseconds: 1500),
-          );
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => HomePage()),
-          );
-        } else if (state is AuthError ||
-            state is GoogleSignInError ||
-            state is ResetPasswordError) {
-          CustomSnackBar.showError(
-            context: context,
-            message: state is AuthError
-                ? state.message
-                : state is GoogleSignInError
-                ? state.message
-                : (state as ResetPasswordError).message,
-            duration: const Duration(milliseconds: 1500),
-          );
-        } else if (state is ResetPasswordEmailSent) {
-          CustomSnackBar.showSuccess(
-            context: context,
-            message: state.message,
-            duration: const Duration(milliseconds: 1500),
-          );
-        }
-      },
-      builder: (context, state) {
-        return Scaffold(
-          body: Stack(
-            children: [
-              SafeArea(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 24.h,
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 36.h),
-                        Text(
-                          'Welcome Back! 😍',
-                          style: TextStyle(
-                            fontSize: 32.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 12.h),
-                        Text(
-                          'Enter your email and password to log in.',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                        SizedBox(height: 36.h),
-                        _buildLoginForm(),
-                        SizedBox(height: 24.h),
-                        _buildForgotPassword(),
-                        SizedBox(height: 24.h),
-                        _buildLoginButton(),
-                        SizedBox(height: 24.h),
-                        _buildDivider(),
-                        SizedBox(height: 24.h),
-                        _buildGoogleSignIn(),
-                        SizedBox(height: 36.h),
-                        _buildSignUpRow(),
-                      ],
+    SizeConfig.mContext = context;
+    SizeConfig().init(context);
+
+    return BlocBuilder<ThemeCubit, bool>(
+      builder: (context, isDarkMode) {
+        final backgroundColor = isDarkMode ? kMainDark : Colors.white;
+        final backgroundButton = isDarkMode ? kScaffoldLight : kDetails;
+        final textColor = isDarkMode ? Colors.white : kMainLight;
+        final subTextColor = isDarkMode ? Colors.white : kMainLight.withValues(alpha: 0.7);
+        final accentColor = isDarkMode ? kButton : kButton;
+        final dividerColor = isDarkMode ? kPreIcon : kMainDark;
+
+        return BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthLoading) {
+              UI.infoSnack(context, state.message.tr());
+            } else if (state is ValidationSuccess) {
+              context.read<AuthBloc>().add(
+                SignInRequested(
+                  email: _emailController.text.trim(),
+                  password: _passwordController.text,
+                ),
+              );
+            } else if (state is ValidationError) {
+              UI.errorSnack(context, state.message.tr());
+            } else if (state is AuthSuccess) {
+              UI.successSnack(context, state.message.tr());
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => HomePage()),
+              );
+            } else if (state is GoogleSignInSuccess) {
+              UI.successSnack(context, state.message.tr());
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => HomePage()),
+              );
+            } else if (state is AuthError ||
+                state is GoogleSignInError ||
+                state is ResetPasswordError) {
+              UI.errorSnack(
+                context,
+                (state is AuthError
+                    ? state.message
+                    : state is GoogleSignInError
+                    ? state.message
+                    : (state as ResetPasswordError).message).tr(),
+              );
+            } else if (state is ResetPasswordSuccess) {
+              UI.successSnack(context, state.message.tr());
+            }
+          },
+          builder: (context, state) {
+            return Scaffold(
+              backgroundColor: backgroundColor,
+              body: Stack(
+                children: [
+                  SafeArea(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: SizeConfig.defaultSize! * 2,
+                        vertical: SizeConfig.defaultSize!*0.2,
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: SizeConfig.isPortrait()
+                            ? _buildPortraitLayout(state, textColor, accentColor,subTextColor,dividerColor,backgroundButton)
+                            : _buildLandscapeLayout(state, textColor, accentColor,dividerColor,backgroundButton,subTextColor),
+                      ),
                     ),
                   ),
-                ),
+                  if (state is AuthLoading)
+                    LoadingOverlay(message: state.message.tr()),
+                ],
               ),
-              if (state is AuthLoading) LoadingOverlay(message: state.message),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildLoginForm() {
+  Widget _buildPortraitLayout(AuthState state, Color textColor, Color accentColor,Color subTextColor,Color dividerColor,Color backgroundButton) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AuthTextField(
-          labelText: 'Email',
-          hintText: 'Enter your email',
-          prefixIcon: Icons.email,
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          fieldType: 'email',
+        Center(
+          child: Container(
+            width: SizeConfig.screenWidth! * 0.8,
+            height: SizeConfig.screenHeight! * 0.30,
+            child: SvgPicture.asset(
+              'assets/images/Mobile login-amico.svg',
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
-        SizedBox(height: 24.h),
-        AuthTextField(
-          labelText: 'Password',
-          hintText: 'Enter your password',
-          prefixIcon: Icons.lock,
-          controller: _passwordController,
-          isPassword: true,
-          fieldType: 'password',
+        Text(
+          'auth.login'.tr(),
+          style: TextStyle(
+            fontSize: SizeConfig.defaultSize! * 2,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        Text(
+          'auth.login_subtitle'.tr(),
+          style: TextStyle(
+            color: subTextColor,
+            fontSize: SizeConfig.defaultSize! * 1.5,
+          ),
+        ),
+        SizedBox(height: SizeConfig.defaultSize! * 2),
+        _buildLoginForm(textColor, accentColor),
+        SizedBox(height: SizeConfig.defaultSize! * 4),
+        Transform.scale(
+          scale: 1,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: backgroundButton, // Lighter background
+                      borderRadius: BorderRadius.horizontal(
+                        right: Radius.circular(SizeConfig.defaultSize! * 3), // Smaller radius
+                        left: Radius.circular(SizeConfig.defaultSize! * 3), // Smaller radius
+                      ),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      vertical: SizeConfig.defaultSize! * 0.9,  // Reduced padding
+                      horizontal: SizeConfig.defaultSize! * 1,
+                    ),
+                    child: TextButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero, // Remove button padding
+                        minimumSize: Size.zero, // Remove minimum size constraint
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce tap target
+                      ),
+                      child: Text(
+                        'auth.forgot_password'.tr(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: SizeConfig.defaultSize! * 1.5, // Smaller font
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: SizeConfig.defaultSize!*16), // Reduced spacing
+                  Container(
+                    decoration: BoxDecoration(
+                      color: backgroundButton, // Lighter background
+                      borderRadius: BorderRadius.horizontal(
+                        right: Radius.circular(SizeConfig.defaultSize! * 3), // Smaller radius
+                        left: Radius.circular(SizeConfig.defaultSize! * 3),  // Smaller radius
+                      ),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      vertical: SizeConfig.defaultSize! * 0.9, // Reduced padding
+                      horizontal: SizeConfig.defaultSize! * 1,
+                    ),
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => SignUpScreen()),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero, // Remove button padding
+                        minimumSize: Size.zero, // Remove minimum size constraint
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce tap target
+                      ),
+                      child: Text(
+                        'auth.sign_up'.tr(),
+                        style: TextStyle(
+                          color: kButton,
+                          fontSize: SizeConfig.defaultSize! * 1.5, // Smaller font
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: SizeConfig.defaultSize! * 2),
+        _buildDivider(dividerColor),
+        SizedBox(height: SizeConfig.defaultSize! * 2),
+        _buildGoogleSignIn(textColor),
+        SizedBox(height: SizeConfig.defaultSize! *0.5),
+
+      ],
+    );
+  }
+
+  Widget _buildLandscapeLayout(AuthState state, Color textColor, Color accentColor,Color dividerColor,Color backgroundButton,Color subTextColor) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Left side - Image and Google Sign In
+        Expanded(
+          flex: 1,
+          child: Column(
+            children: [
+              Container(
+                height: SizeConfig.screenHeight! * 0.65, // Reduced height to fit Google part
+                child: SvgPicture.asset(
+                  'assets/images/Mobile login-amico.svg',
+                  fit: BoxFit.contain,
+                ),
+              ),
+              SizedBox(height: SizeConfig.defaultSize!),
+              Transform.scale(
+                scale: 0.9,
+                child: _buildDivider(dividerColor),
+              ),
+              SizedBox(height: SizeConfig.defaultSize!),
+              Transform.scale(
+                scale: 0.9,
+                child: _buildGoogleSignIn(textColor),
+              ),
+            ],
+          ),
+        ),
+
+        // Right side - Form and Links
+        Expanded(
+          flex: 1,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: SizeConfig.defaultSize! * 1.8),
+              Text(
+                'auth.login'.tr(),
+                style: TextStyle(
+                  fontSize: SizeConfig.defaultSize! * 1.8,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+              Text(
+                'auth.login_subtitle'.tr(),
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: SizeConfig.defaultSize! * 1.5,
+                ),
+              ),
+              SizedBox(height: SizeConfig.defaultSize!),
+              Transform.scale(
+                scale: 0.90,
+                child: _buildLoginForm(textColor, accentColor),
+              ),
+              SizedBox(height: SizeConfig.defaultSize!*1.7),
+
+              // Forgot Password and Sign Up in a row
+              Row(
+                //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                children: [
+                  SizedBox(width: SizeConfig.defaultSize!*2),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: backgroundButton, // Lighter background
+                      borderRadius: BorderRadius.horizontal(
+                        right: Radius.circular(SizeConfig.defaultSize! * 3), // Smaller radius
+                        left: Radius.circular(SizeConfig.defaultSize! * 3), // Smaller radius
+                      ),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      vertical: SizeConfig.defaultSize! * 0.9,  // Reduced padding
+                      horizontal: SizeConfig.defaultSize! * 1,
+                    ),
+                    child: TextButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero, // Remove button padding
+                        minimumSize: Size.zero, // Remove minimum size constraint
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce tap target
+                      ),
+                      child: Text(
+                        'auth.forgot_password'.tr(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: SizeConfig.defaultSize! * 1.5, // Smaller font
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: SizeConfig.defaultSize!*18), // Reduced spacing
+                  Container(
+                    decoration: BoxDecoration(
+                      color: backgroundButton, // Lighter background
+                      borderRadius: BorderRadius.horizontal(
+                        right: Radius.circular(SizeConfig.defaultSize! * 3), // Smaller radius
+                        left: Radius.circular(SizeConfig.defaultSize! * 3),  // Smaller radius
+                      ),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      vertical: SizeConfig.defaultSize! * 0.9, // Reduced padding
+                      horizontal: SizeConfig.defaultSize! * 1,
+                    ),
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => SignUpScreen()),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero, // Remove button padding
+                        minimumSize: Size.zero, // Remove minimum size constraint
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce tap target
+                      ),
+                      child: Text(
+                        'auth.sign_up'.tr(),
+                        style: TextStyle(
+                          color: kButton,
+                          fontSize: SizeConfig.defaultSize! * 1.5, // Smaller font
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildForgotPassword() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: TextButton(
-        onPressed: _showForgotPasswordDialog,
-        child: Text(
-          'Forgot Password?',
-          style: TextStyle(
-            color: Theme.of(context).primaryColor,
-            fontSize: 14.sp,
+  Widget _buildLoginForm(Color textColor, Color accentColor) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Form Container
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize!),
+          padding: EdgeInsets.all(SizeConfig.defaultSize! * 1.5),
+          decoration: BoxDecoration(
+
+            color: kDetails,
+            borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 1.5),
+          ),
+          child: Column(
+            children: [
+              AuthTextField(
+                controller: _emailController,
+                hintText: 'auth.email'.tr(),
+                keyboardType: TextInputType.emailAddress,
+                fieldType: 'email',
+                labelText: 'auth.email'.tr(),
+                prefixIcon: Icons.email_outlined,
+              ),
+              SizedBox(height: SizeConfig.defaultSize! * 1.5),
+              AuthTextField(
+                controller: _passwordController,
+                hintText: 'auth.password'.tr(),
+                isPassword: true,
+                fieldType: 'password',
+                labelText: 'auth.password'.tr(),
+                prefixIcon: Icons.lock_outline,
+              ),
+              // Add space for the overlapping button
+              SizedBox(height: SizeConfig.defaultSize! * 4),
+            ],
           ),
         ),
-      ),
+        // Overlapping Button
+        Positioned(
+          bottom: -SizeConfig.defaultSize! * 2,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: SizedBox(
+              width: SizeConfig.size(p: 200, l: 200),
+              height: SizeConfig.defaultSize! * 5.3,
+              child: CustomButton(
+                text: 'auth.login'.tr(),
+                onPressed: _handleLogin,
+                fontSize: SizeConfig.defaultSize! * 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildLoginButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56.h,
-      child: CustomButton(
-        text: 'Log In',
-        onPressed: _handleLogin,
-      ),
-    );
-  }
 
-  Widget _buildDivider() {
+
+  Widget _buildDivider(Color dividerColor) {
     return Row(
       children: [
-        Expanded(child: Divider()),
+        Expanded(child: Divider(color: dividerColor)),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize!),
           child: Text(
-            'Or continue with',
+            'auth.or_continue_with'.tr(),
             style: TextStyle(
-              color: Colors.grey,
-              fontSize: 14.sp,
+              color: dividerColor,
+              fontSize: SizeConfig.defaultSize! * 1.2,
             ),
           ),
         ),
-        Expanded(child: Divider()),
+        Expanded(child: Divider(color: dividerColor)),
       ],
     );
   }
 
-  Widget _buildGoogleSignIn() {
-    return SizedBox(
+  Widget _buildGoogleSignIn(Color textColor) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize!),
       width: double.infinity,
-      height: 56.h,
-      child: OutlinedButton.icon(
-        icon: FaIcon(FontAwesomeIcons.google, color: Colors.red),
-        label: Text(
-          'Continue with Google',
-          style: TextStyle(
-            fontSize: 16.sp,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey.shade300),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
+      height: SizeConfig.defaultSize! * 5,
+      child: ElevatedButton(
         onPressed: _handleGoogleSignIn,
-      ),
-    );
-  }
-
-  Widget _buildSignUpRow() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Flexible(
-          child: Text(
-            'Don\'t have an account?',
-            style: TextStyle(fontSize: 14.sp),
-            overflow: TextOverflow.ellipsis,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: kPreIcon.withValues(alpha: 0.7),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 3),
           ),
+          elevation: 0,
         ),
-        TextButton(
-          onPressed: () => Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => SignUpScreen())),
-          child: Text(
-            'Sign Up',
-            style: TextStyle(
-              color: isDarkMode ? kMainDark : kMainDark,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _handleLogin() {
-    if (_formKey.currentState?.validate() ?? false) {
-      context.read<AuthBloc>().add(
-        SignInRequested(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        ),
-      );
-    } else {
-      CustomSnackBar.showError(
-        context: context,
-        message: 'Please fill all required fields correctly',
-        duration: const Duration(milliseconds: 1500),
-      );
-    }
-  }
-
-  void _handleGoogleSignIn() {
-    context.read<AuthBloc>().add(GoogleSignInRequested());
-  }
-
-  void _showForgotPasswordDialog() {
-    final emailController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Reset Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'Enter your email address and we\'ll send you a link to reset your password.',
-              style: TextStyle(fontSize: 14.sp),
+            FaIcon(
+              FontAwesomeIcons.google,
+              color: kMainDark,
+              size: SizeConfig.defaultSize! * 1.7,
             ),
-            SizedBox(height: 16.h),
-            AuthTextField(
-              controller: emailController,
-              labelText: 'Email',
-              hintText: 'Enter your email',
-              prefixIcon: Icons.email,
-              keyboardType: TextInputType.emailAddress,
-              fieldType: 'email',
+            SizedBox(width: SizeConfig.defaultSize!),
+            Text(
+              'auth.continue_with_google'.tr(),
+              style: TextStyle(
+                color: kMainDark,
+                fontSize: SizeConfig.defaultSize! * 1.6,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (emailController.text.isNotEmpty) {
-                context.read<AuthBloc>().add(
-                  ResetPasswordRequested(email: emailController.text.trim()),
-                );
-                Navigator.pop(context);
-              }
-            },
-            child: Text('Send Reset Link'),
-          ),
-        ],
       ),
     );
+  }
+
+
+
+  void _handleLogin() {
+    context.read<AuthBloc>().add(
+      ValidateLoginFields(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      ),
+    );
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+        signInOption: SignInOption.standard,
+      );
+
+      await googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser != null) {
+        context.read<AuthBloc>().add(GoogleSignInRequested());
+      }
+    } catch (e) {
+      UI.errorSnack(
+        context,
+        'auth.google_sign_in_failed'.tr(args: [e.toString()]),
+      );
+    }
   }
 }

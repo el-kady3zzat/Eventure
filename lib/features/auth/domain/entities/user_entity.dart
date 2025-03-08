@@ -16,7 +16,7 @@ class UserEntity {
     required this.email,
     required this.phone,
     this.image,
-    this.location = '',
+    this.location = 'Egypt',
     this.role = 'client',
     this.bookedEvents = const [],
     this.favEvents = const [],

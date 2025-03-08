@@ -38,7 +38,7 @@ class FirebaseService {
           password: password, // Note: Consider not storing this
           phone: phone,
           image: '',
-          location: '',
+          location: 'Egypt',
           role: 'client',
           bookedEvents: [],
           favEvents: [],

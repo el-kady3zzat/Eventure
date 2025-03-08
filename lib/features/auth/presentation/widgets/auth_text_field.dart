@@ -1,21 +1,27 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:eventure/core/blocs/auth_text_field_bloc/auth_text_field_bloc.dart';
 import 'package:eventure/core/blocs/auth_text_field_bloc/auth_text_field_event.dart';
 import 'package:eventure/core/blocs/auth_text_field_bloc/auth_text_field_states.dart';
+import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:flutter/services.dart';
+import 'dart:ui' as ui;
 class AuthTextField extends StatefulWidget {
   final String labelText;
   final String hintText;
+  final int maxLength;
   final IconData prefixIcon;
   final TextEditingController controller;
   final TextInputType keyboardType;
   final bool isPassword;
   final String fieldType;
   final TextEditingController? passwordController;
+  final Function(String)? onChanged;
+  final Widget? suffixIcon;
+
 
   const AuthTextField({
     super.key,
@@ -27,6 +33,9 @@ class AuthTextField extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.isPassword = false,
     this.passwordController,
+    this.maxLength = 100,
+    this.onChanged,
+    this.suffixIcon,
   });
 
   @override
@@ -45,6 +54,10 @@ class AuthTextFieldState extends State<AuthTextField> {
     if (widget.fieldType == 'confirmPassword' && widget.passwordController != null) {
       widget.passwordController!.addListener(_onPasswordChange);
       widget.controller.addListener(_onConfirmPasswordChange);
+    }
+
+    if (widget.fieldType == 'phone' && widget.controller.text.isEmpty) {
+      widget.controller.text = '+2';
     }
   }
 
@@ -77,6 +90,28 @@ class AuthTextFieldState extends State<AuthTextField> {
     }
   }
 
+  String _formatPhoneNumber(String value) {
+    if (value.isEmpty) return '+2';
+
+    if (!value.startsWith('+2')) {
+      value = '+2${value.replaceAll('+2', '')}';
+    }
+
+    value = value.replaceAll(' ', '');
+
+    if (value.length > 2) {
+      value = value.substring(0, 2) + ' ' + value.substring(2);
+    }
+    if (value.length > 6) {
+      value = value.substring(0, 6) + ' ' + value.substring(6);
+    }
+    if (value.length > 10) {
+      value = value.substring(0, 10) + ' ' + value.substring(10);
+    }
+
+    return value;
+  }
+
   bool isFieldValid() {
     if (widget.fieldType == 'confirmPassword') {
       return isValid && widget.controller.text == widget.passwordController?.text;
@@ -88,7 +123,9 @@ class AuthTextFieldState extends State<AuthTextField> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
-      margin: REdgeInsets.symmetric(vertical: 2.h),
+      margin: EdgeInsets.symmetric(
+        vertical: SizeConfig.size(p: 1, l: 1),
+      ),
       child: Row(
         children: [
           AnimatedSwitcher(
@@ -105,19 +142,19 @@ class AuthTextFieldState extends State<AuthTextField> {
             child: Icon(
               isMet ? Icons.check_circle : Icons.circle_outlined,
               key: ValueKey<bool>(isMet),
-              color: isMet ? Colors.green : Colors.grey,
-              size: 16.sp,
+              color: isMet ? kButton : Colors.white60,
+              size: SizeConfig.size(p: 14, l: 14),
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: SizeConfig.size(p: 8, l: 6)),
           Expanded(
             child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                color: isMet ? Colors.green : Colors.grey,
-                fontSize: 12.sp,
+                color: isMet ? kButton : Colors.white60,
+                fontSize: SizeConfig.size(p: 10, l: 10),
               ),
-              child: Text(requirement),
+              child: Text(requirement), // requirement is already a translation key
             ),
           ),
         ],
@@ -127,7 +164,7 @@ class AuthTextFieldState extends State<AuthTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final defaultSize = SizeConfig.defaultSize!;
 
     return BlocProvider.value(
       value: _bloc,
@@ -152,91 +189,154 @@ class AuthTextFieldState extends State<AuthTextField> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
-                cursorColor: isDarkMode ? kMainDark : kMainDark,
+                cursorColor: kButton,
                 controller: widget.controller,
                 keyboardType: widget.keyboardType,
                 obscureText: widget.isPassword && state.obscureText,
+                maxLength: widget.fieldType == 'phone' ? 16 : null,
+                textAlign: widget.fieldType == 'phone' ? TextAlign.left : TextAlign.start,
+                textDirection: widget.fieldType == 'phone' ? ui.TextDirection.ltr : null,
+                inputFormatters: widget.fieldType == 'phone'
+                    ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]'))]
+                    : null,
                 onChanged: (value) {
+                  if (widget.fieldType == 'phone') {
+                    value = value.replaceAll('+2', '').replaceAll(' ', '');
+                    if (value.length > 11) {
+                      value = value.substring(0, 11);
+                    }
+                    if (value.isNotEmpty) {
+                      value = '+2$value';
+                    }
+                    final formattedValue = _formatPhoneNumber(value);
+                    widget.controller.value = TextEditingValue(
+                      text: formattedValue,
+                      selection: TextSelection.collapsed(offset: formattedValue.length),
+                    );
+                  }
+
                   _bloc.add(TextChangedEvent(
-                    text: value,
+                    text: widget.controller.text,
                     fieldType: widget.fieldType,
                   ));
+
+                  if (widget.onChanged != null) {
+                    widget.onChanged!(widget.controller.text);
+                  }
+                },
+                onTap: () {
+                  if (widget.fieldType == 'phone') {
+                    if (widget.controller.text.isEmpty) {
+                      widget.controller.text = '+2';
+                      widget.controller.selection = TextSelection.collapsed(offset: 2);
+                    }
+                  }
                 },
                 decoration: InputDecoration(
-                  labelText: widget.labelText,
-                  hintText: widget.hintText,
-                  errorText: state.showError ? state.errorMessage : null,
+                  alignLabelWithHint: widget.fieldType == 'phone',
+                  hintTextDirection: widget.fieldType == 'phone' ? ui.TextDirection.ltr : null,
+                  labelText: widget.labelText.tr(),
+                  labelStyle: TextStyle(
+                    color: Colors.white70,
+                    fontSize: SizeConfig.size(p: defaultSize * 1.2, l: defaultSize* 1.5),
+                  ),
+                  hintText: widget.fieldType == 'phone'
+                      ? '+2 XXX XXX XXXX'
+                      : widget.hintText.tr(),
+                  hintStyle: TextStyle(
+                    color: Colors.white60,
+                    fontSize: SizeConfig.size(p: defaultSize * 1.2, l: defaultSize* 1.2),
+                  ),
+                  errorText: state.showError && state.errorMessage != null
+                      ? state.errorMessage!.tr()
+                      : null,
+                  errorStyle: TextStyle(
+                    color: Colors.red.shade400,
+                    fontSize: SizeConfig.size(p: defaultSize * 1.1, l: defaultSize * 1.2),
+                  ),
                   prefixIcon: Icon(
                     widget.prefixIcon,
-                    color: isDarkMode ? kMainDark : kMainDark,
+                    color: kPreIcon,
+                    size: SizeConfig.size(p: defaultSize * 2, l: defaultSize * 2.5),
                   ),
-                  suffixIcon: widget.isPassword
+                  suffixIcon: widget.suffixIcon ?? (widget.isPassword
                       ? IconButton(
                     icon: Icon(
                       state.obscureText
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: isDarkMode ? kMainDark : kMainDark,
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: kButton,
+                      size: SizeConfig.size(p: defaultSize * 2, l: defaultSize * 2.2),
                     ),
                     onPressed: () {
                       _bloc.add(const TogglePasswordVisibilityEvent());
                     },
                   )
-                      : null,
+                      : null),
+                  filled: false,
+                  fillColor: kMainLight,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0.r),
-                    borderSide: BorderSide(
-                      color: state.showError ? Colors.redAccent : Colors.grey,
-                      width: 1.5.w,
+                    borderRadius: BorderRadius.circular(
+                      SizeConfig.size(p: defaultSize * 1.2, l: defaultSize),
                     ),
+                    borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0.r),
-                    borderSide: BorderSide(
-                      color: state.showError
-                          ? Colors.redAccent
-                          : Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(
+                      SizeConfig.size(p: defaultSize * 1.2, l: defaultSize),
                     ),
+                    borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0.r),
+                    borderRadius: BorderRadius.circular(
+                      SizeConfig.size(p: defaultSize * 1.2, l: defaultSize),
+                    ),
                     borderSide: BorderSide(
-                      color: state.showError
-                          ? Colors.redAccent
-                          : isDarkMode
-                          ? kMainDark
-                          : kMainDark,
-                      width: 2.0.w,
+                      color: kButton,
+                      width: SizeConfig.size(p: 1, l: 0.8),
                     ),
                   ),
                   errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0.r),
-                    borderSide: const BorderSide(
-                      color: Colors.redAccent,
-                      width: 1.5,
+                    borderRadius: BorderRadius.circular(
+                      SizeConfig.size(p: defaultSize * 1.2, l: defaultSize),
+                    ),
+                    borderSide: BorderSide(
+                      color: Colors.red.shade400,
+                      width: SizeConfig.size(p: 1, l: 0.8),
                     ),
                   ),
                   focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0.r),
-                    borderSide: const BorderSide(
-                      color: Colors.redAccent,
-                      width: 2.0,
+                    borderRadius: BorderRadius.circular(
+                      SizeConfig.size(p: defaultSize * 1.2, l: defaultSize),
+                    ),
+                    borderSide: BorderSide(
+                      color: Colors.red.shade400,
+                      width: SizeConfig.size(p: 1, l: 0.8),
                     ),
                   ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: SizeConfig.size(p: defaultSize * 1.5, l: defaultSize * 1.2),
+                    vertical: SizeConfig.size(p: defaultSize , l: defaultSize),
+                  ),
+                  counterText: '',
                 ),
+
                 style: TextStyle(
-                  color: isDarkMode ? kMainDark : kMainDark,
+                  color: Colors.white,
+                  fontSize: SizeConfig.size(p: defaultSize * 1.5, l: defaultSize * 1.5),
                 ),
               ),
               if (widget.fieldType == 'password' &&
                   state.passwordRequirements != null &&
-                  widget.controller.text.isNotEmpty&&
+                  widget.controller.text.isNotEmpty &&
                   !state.passwordRequirements!.values.every((met) => met))
                 AnimatedSize(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                   child: Padding(
-                    padding: REdgeInsets.only(top: 8.0.h),
+                    padding: EdgeInsets.only(
+                      top: SizeConfig.size(p: defaultSize, l: defaultSize * 0.8),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

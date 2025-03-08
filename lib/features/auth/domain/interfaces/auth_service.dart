@@ -13,5 +13,14 @@ abstract class IAuthService {
   Future<Result<void>> verifyPhoneNumber(String phoneNumber);
   Future<Result<UserEntity>> verifyOTP(String otp);
   Future<Result<UserEntity>> signInWithGoogle();
+  Future<Result<void>> resetPassword(String email);
   Stream<bool> get authStateChanges;
+  bool isPhoneVerificationInProgress();
+  Future<Result<bool>> isPhoneRegistered(String phoneNumber);
+  Future<Result<bool>> isEmailRegistered(String email);
+  //Future<Result<bool>> isNameRegistered(String name);
+
+  //Future<Result<bool>> isNameTaken(String name);  // Add this if missing
+
+
 }

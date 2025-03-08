@@ -36,7 +36,7 @@ class FirebaseUserRepository implements IUserRepository {
         email: signUpData.email.trim(),
         phone: signUpData.phone?.trim() ?? '',
         image: '',
-        location: '',
+        location: 'Egypt',
         role: 'client',
         bookedEvents: [],
         favEvents: [],
@@ -136,18 +136,18 @@ class FirebaseUserRepository implements IUserRepository {
     }
   }
 
-  @override
-  Future<Result<bool>> isNameTaken(String name) async {
-    try {
-      final result = await _firestore
-          .collection(_collection)
-          .where('name', isEqualTo: name.trim())
-          .get();
-      return Result.success(result.docs.isNotEmpty);
-    } catch (e) {
-      return Result.failure('Failed to check name availability');
-    }
-  }
+  // @override
+  // Future<Result<bool>> isNameTaken(String name) async {
+  //   try {
+  //     final result = await _firestore
+  //         .collection(_collection)
+  //         .where('name', isEqualTo: name.trim())
+  //         .get();
+  //     return Result.success(result.docs.isNotEmpty);
+  //   } catch (e) {
+  //     return Result.failure('Failed to check name availability');
+  //   }
+  // }
 
   @override
   Future<Result<bool>> isPhoneTaken(String phone) async {

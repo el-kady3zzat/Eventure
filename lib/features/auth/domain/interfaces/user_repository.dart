@@ -8,6 +8,6 @@ abstract class IUserRepository {
   Future<Result<UserEntity?>> getUserById(String id);
   Future<Result<void>> createUser(SignUpData signUpData, String uid);
   Future<Result<void>> updateUser(UserEntity user);
-  Future<Result<bool>> isNameTaken(String name);
+  //Future<Result<bool>> isNameTaken(String name);
   Future<Result<bool>> isPhoneTaken(String phone);
 }

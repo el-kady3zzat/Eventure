@@ -1,21 +1,24 @@
-// lib/presentation/auth/screens/signup_screen.dart
-
+import 'package:eventure/core/utils/size/size_config.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
+import 'package:eventure/core/utils/theme/theme_cubit/theme_cubit.dart';
 import 'package:eventure/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:eventure/features/auth/presentation/bloc/auth_event.dart';
 import 'package:eventure/features/auth/presentation/bloc/auth_states.dart';
 import 'package:eventure/features/auth/presentation/pages/login_screen.dart';
+import 'package:eventure/features/auth/presentation/pages/otp_screen.dart';
 import 'package:eventure/features/auth/presentation/widgets/auth_text_field.dart';
 import 'package:eventure/features/auth/presentation/widgets/custom_button.dart';
-import 'package:eventure/features/auth/presentation/widgets/custom_snack_bar.dart';
 import 'package:eventure/features/auth/presentation/widgets/loading_overlay.dart';
 import 'package:eventure/features/events/presentation/pages/home_page.dart';
 import 'package:eventure/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:eventure/core/utils/helper/ui.dart';
+import 'dart:ui' as ui;
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
 
@@ -34,7 +37,6 @@ class SignUpView extends StatefulWidget {
   @override
   State<SignUpView> createState() => _SignUpViewState();
 }
-
 class _SignUpViewState extends State<SignUpView> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -42,6 +44,13 @@ class _SignUpViewState extends State<SignUpView> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
+  bool _isNavigating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneController.text = '+2';
+  }
 
   @override
   void dispose() {
@@ -55,350 +64,491 @@ class _SignUpViewState extends State<SignUpView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthLoading) {
-          CustomSnackBar.showInfo(
-            context: context,
-            message: state.message,
-            duration: const Duration(milliseconds: 1500),
-          );
-        } else if (state is AuthSuccess ||
-            state is GoogleSignInSuccess ||
-            state is OTPVerificationSuccess) {
-          CustomSnackBar.showSuccess(
-            context: context,
-            message: state is AuthSuccess
-                ? state.message
-                : state is GoogleSignInSuccess
-                ? state.message
-                : (state as OTPVerificationSuccess).message,
-            duration: const Duration(milliseconds: 1500),
-          );
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => HomePage()),
-          );
-        } else if (state is AuthError ||
-            state is GoogleSignInError ||
-            state is OTPVerificationError) {
-          CustomSnackBar.showError(
-            context: context,
-            message: state is AuthError
-                ? state.message
-                : state is GoogleSignInError
-                ? state.message
-                : (state as OTPVerificationError).message,
-            duration: const Duration(milliseconds: 1500),
-          );
-        } else if (state is PhoneNumberVerificationSent) {
-          CustomSnackBar.showInfo(
-            context: context,
-            message: state.message,
-            duration: const Duration(milliseconds: 1500),
-          );
-        }
-      },
-      builder: (context, state) {
-        return Scaffold(
-          body: Stack(
-            children: [
-              SafeArea(
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 24.h,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 36.h),
-                        Text(
-                          'Sign up!',
-                          style: TextStyle(
-                            fontSize: 32.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 12.h),
-                        Text(
-                          'Create your account to get started.',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                        SizedBox(height: 36.h),
-                        _buildSignUpForm(),
-                        SizedBox(height: 24.h),
-                        _buildSignUpButton(),
-                        SizedBox(height: 24.h),
-                        _buildDivider(),
-                        SizedBox(height: 24.h),
-                        _buildSocialSignIn(),
-                        SizedBox(height: 36.h),
-                        _buildLoginRow(),
+    SizeConfig.mContext = context;
+    SizeConfig().init(context);
+
+    return BlocBuilder<ThemeCubit, bool>(
+      builder: (context, isDarkMode) {
+        final backgroundColor = isDarkMode ? kMainDark : Colors.white;
+        final backgroundButton = isDarkMode ? kScaffoldLight : kDetails;
+        final textColor = isDarkMode ? Colors.white : kMainLight;
+        final subTextColor = isDarkMode ? Colors.white : kMainLight.withValues(alpha: 0.7);
+        final accentColor = isDarkMode ? kButton : kButton;
+        final dividerColor = isDarkMode ? kPreIcon : kMainDark;
+
+        return BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (_isNavigating) return;
+
+            if (state is AuthLoading) {
+              UI.infoSnack(context, state.message.tr());
+            } else if (state is ValidationSuccess) {
+              final authBloc = context.read<AuthBloc>();
+              if (_phoneController.text.trim() == '+2') {
+                authBloc.add(
+                  SignUpRequested(
+                    name: _nameController.text.trim(),
+                    email: _emailController.text.trim(),
+                    password: _passwordController.text,
+                    confirmPassword: _confirmPasswordController.text,
+                    phone: '',
+                  ),
+                );
+              } else {
+                authBloc.add(
+                  PhoneNumberSubmitted(phoneNumber: _phoneController.text.trim()),
+                );
+              }
+            } else if (state is ValidationError) {
+              UI.errorSnack(context, state.message.tr());
+            } else if (state is AuthSuccess) {
+              UI.successSnack(context, state.message.tr());
+              setState(() => _isNavigating = true);
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => HomePage()),
+                    (route) => false,
+              );
+            }
+            else if (state is PhoneNumberVerificationSent) {
+              UI.successSnack(context, state.message.tr());
+              final authBloc = context.read<AuthBloc>();
+              final themeCubit = context.read<ThemeCubit>();
+
+              if (mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MultiBlocProvider(
+                      providers: [
+                        BlocProvider.value(value: authBloc),
+                        BlocProvider.value(value: themeCubit),
                       ],
+                      child: OTPVerificationScreen(
+                        phoneNumber: _phoneController.text.trim(),
+                        onVerificationComplete: () {
+                          if (!mounted) return;
+                          authBloc.add(
+                            SignUpRequested(
+                              name: _nameController.text.trim(),
+                              email: _emailController.text.trim(),
+                              password: _passwordController.text,
+                              confirmPassword: _confirmPasswordController.text,
+                              phone: _phoneController.text.trim(),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
+                );
+              }
+            }
+
+            else if (state is GoogleSignInSuccess) {
+              UI.successSnack(context, state.message.tr());
+              setState(() => _isNavigating = true);
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => HomePage()),
+                    (route) => false,
+              );
+            } else if (state is AuthError ||
+                state is GoogleSignInError ||
+                state is OTPVerificationError) {
+              UI.errorSnack(
+                context,
+                (state is AuthError
+                    ? state.message
+                    : state is GoogleSignInError
+
+                    ? state.message
+                    : (state as OTPVerificationError).message).tr(),
+              );
+            }
+          },
+          builder: (context, state) {
+            return Scaffold(
+              backgroundColor: backgroundColor,
+              body: Stack(
+                children: [
+                  SafeArea(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: SizeConfig.defaultSize! * 2,
+                        vertical: SizeConfig.defaultSize! * 0.2,
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: SizeConfig.isPortrait()
+                            ? _buildPortraitLayout(state, textColor, accentColor, subTextColor, dividerColor, backgroundButton)
+                            : _buildLandscapeLayout(state, textColor, accentColor, dividerColor, backgroundButton, subTextColor),
+                      ),
+                    ),
+                  ),
+                  if (state is AuthLoading)
+                    LoadingOverlay(message: state.message.tr()),
+                ],
               ),
-              if (state is AuthLoading)
-                LoadingOverlay(message: state.message),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
-
-  Widget _buildSignUpForm() {
+  Widget _buildPortraitLayout(AuthState state, Color textColor, Color accentColor, Color subTextColor, Color dividerColor, Color backgroundButton) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AuthTextField(
-          labelText: 'Full Name',
-          hintText: 'Enter your full name',
-          prefixIcon: Icons.person,
-          controller: _nameController,
-          fieldType: 'name',
-        ),
-        SizedBox(height: 24.h),
-        AuthTextField(
-          labelText: 'Email',
-          hintText: 'Enter your email',
-          prefixIcon: Icons.email,
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          fieldType: 'email',
-        ),
-        SizedBox(height: 24.h),
-        AuthTextField(
-          labelText: 'Password',
-          hintText: 'Enter your password',
-          prefixIcon: Icons.lock,
-          controller: _passwordController,
-          isPassword: true,
-          fieldType: 'password',
-        ),
-        SizedBox(height: 24.h),
-        AuthTextField(
-          labelText: 'Confirm Password',
-          hintText: 'Confirm your password',
-          prefixIcon: Icons.lock_outline,
-          controller: _confirmPasswordController,
-          isPassword: true,
-          fieldType: 'confirmPassword',
-          passwordController: _passwordController,
-        ),
-        SizedBox(height: 24.h),
-        AuthTextField(
-          fieldType: 'phone',
-          labelText: 'Phone Number (Optional)',
-          hintText: 'Enter your phone number',
-          prefixIcon: Icons.phone,
-          controller: _phoneController,
-          keyboardType: TextInputType.phone,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSignUpButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56.h,
-      child: CustomButton(
-        text: 'Sign Up',
-        onPressed: _handleSignUp,
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(child: Divider()),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Text(
-            'Or continue with',
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 14.sp,
+        Center(
+          child: Container(
+            width: SizeConfig.screenWidth! * 0.8,
+            height: SizeConfig.screenHeight! * 0.25,
+            child: SvgPicture.asset(
+              'assets/images/Mobile login-pana.svg',
+              fit: BoxFit.contain,
             ),
           ),
         ),
-        Expanded(child: Divider()),
+        Text(
+          'auth.sign_up'.tr(),
+          style: TextStyle(
+            fontSize: SizeConfig.defaultSize! * 2,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        Text(
+          'auth.sign_up_subtitle'.tr(),
+          style: TextStyle(
+            color: subTextColor,
+            fontSize: SizeConfig.defaultSize! * 1.5,
+          ),
+        ),
+        SizedBox(height: SizeConfig.defaultSize! * 2),
+        _buildSignUpForm(textColor, accentColor),
+        SizedBox(height: SizeConfig.defaultSize! * 4),
+        _buildDivider(dividerColor),
+        SizedBox(height: SizeConfig.defaultSize! * 2),
+        _buildGoogleSignIn(textColor),
+        SizedBox(height: SizeConfig.defaultSize! * 2),
+        _buildLoginRow(textColor, accentColor, backgroundButton),
       ],
     );
   }
 
-  Widget _buildSocialSignIn() {
-    return Column(
-      children: [
-        _buildGoogleSignInButton(),
-        SizedBox(height: 16.h),
-        _buildPhoneSignInButton(),
-      ],
-    );
-  }
-
-  Widget _buildGoogleSignInButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56.h,
-      child: OutlinedButton.icon(
-        icon: FaIcon(FontAwesomeIcons.google, color: Colors.red),
-        label: Text(
-          'Continue with Google',
-          style: TextStyle(
-            fontSize: 16.sp,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey.shade300),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        onPressed: _handleGoogleSignIn,
-      ),
-    );
-  }
-
-  Widget _buildPhoneSignInButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56.h,
-      child: OutlinedButton.icon(
-        icon: Icon(Icons.phone, color: Colors.green),
-        label: Text(
-          'Continue with Phone',
-          style: TextStyle(
-            fontSize: 16.sp,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey.shade300),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        onPressed: _showPhoneSignInDialog,
-      ),
-    );
-  }
-
-  Widget _buildLoginRow() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
+  Widget _buildLandscapeLayout(AuthState state, Color textColor, Color accentColor, Color dividerColor, Color backgroundButton, Color subTextColor) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Flexible(
-          child: Text(
-            'Already have an account?',
-            style: TextStyle(fontSize: 14.sp),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => LoginScreen())),
-          child: Text(
-            'Log In',
-            style: TextStyle(
-              color: isDarkMode ? kMainDark : kMainLight,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _handleSignUp() {
-    if (_formKey.currentState?.validate() ?? false) {
-      context.read<AuthBloc>().add(
-        SignUpRequested(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          confirmPassword: _confirmPasswordController.text,
-          phone: _phoneController.text.trim(),
-        ),
-      );
-    }
-  }
-
-  void _handleGoogleSignIn() {
-    context.read<AuthBloc>().add(GoogleSignInRequested());
-  }
-
-  void _showPhoneSignInDialog() {
-    final phoneController = TextEditingController();
-    final otpController = TextEditingController();
-    bool isVerifying = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text('Phone Authentication'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+        // Left side - Image and Google Sign In
+        Expanded(
+          flex: 1,
+          child: Column(
             children: [
-              if (!isVerifying) ...[
-                AuthTextField(
-                  controller: phoneController,
-                  labelText: 'Phone Number',
-                  hintText: '+1234567890',
-                  prefixIcon: Icons.phone,
-                  keyboardType: TextInputType.phone,
-                  fieldType: 'phone',
+              Container(
+                height: SizeConfig.screenHeight! * 0.65,
+                child: SvgPicture.asset(
+                  'assets/images/Mobile login-pana.svg',
+                  fit: BoxFit.contain,
                 ),
-              ] else ...[
-                AuthTextField(
-                  controller: otpController,
-                  labelText: 'OTP Code',
-                  hintText: '123456',
-                  prefixIcon: Icons.lock_clock,
-                  keyboardType: TextInputType.number,
-                  fieldType: 'otp',
-                ),
-              ],
+              ),
+              SizedBox(height: SizeConfig.defaultSize!),
+              Transform.scale(
+                scale: 0.9,
+                child: _buildDivider(dividerColor),
+              ),
+              SizedBox(height: SizeConfig.defaultSize!),
+              Transform.scale(
+                scale: 0.9,
+                child: _buildGoogleSignIn(textColor),
+              ),
+              SizedBox(height: SizeConfig.defaultSize!),
+              Transform.scale(
+                scale: 0.9,
+                child: _buildLoginRow(textColor, accentColor, backgroundButton),
+              ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+        ),
+
+        // Right side - Form and Links
+        Expanded(
+          flex: 1,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: SizeConfig.defaultSize! * 1.8),
+              Text(
+                'auth.sign_up'.tr(),
+                style: TextStyle(
+                  fontSize: SizeConfig.defaultSize! * 2,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+              Text(
+                'auth.sign_up_subtitle'.tr(),
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: SizeConfig.defaultSize!*1.5 ,
+                ),
+              ),
+           //   SizedBox(height: SizeConfig.defaultSize!),
+              Transform.scale(
+                scale: 0.85,
+                child: _buildSignUpForm(textColor, accentColor),
+              ),
+              // SizedBox(height: SizeConfig.defaultSize! * 2),
+              // _buildLoginRow(textColor, accentColor, backgroundButton),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  Widget _buildSignUpForm(Color textColor, Color accentColor) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize! * 0.8),  // Reduced margin
+          padding: EdgeInsets.all(SizeConfig.defaultSize! * 1.2),  // Reduced padding
+          decoration: BoxDecoration(
+            color: kDetails,
+            borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 1.2),  // Reduced radius
+          ),
+          child: Column(
+            children: [
+              AuthTextField(
+                controller: _nameController,
+                hintText: 'auth.full_name'.tr(),
+                fieldType: 'name',
+                labelText: 'auth.full_name'.tr(),
+                prefixIcon: Icons.person_3_rounded,
+              ),
+              SizedBox(height: SizeConfig.defaultSize! * 0.8),  // Reduced spacing
+              AuthTextField(
+                controller: _emailController,
+                hintText: 'auth.email'.tr(),
+                keyboardType: TextInputType.emailAddress,
+                fieldType: 'email',
+                labelText: 'auth.email'.tr(),
+                prefixIcon: Icons.email_outlined,
+              ),
+              SizedBox(height: SizeConfig.defaultSize! * 0.8),  // Reduced spacing
+              AuthTextField(
+                controller: _passwordController,
+                hintText: 'auth.password'.tr(),
+                isPassword: true,
+                fieldType: 'password',
+                labelText: 'auth.password'.tr(),
+                prefixIcon: Icons.lock_outline,
+              ),
+              SizedBox(height: SizeConfig.defaultSize! * 0.8),  // Reduced spacing
+              AuthTextField(
+                controller: _confirmPasswordController,
+                hintText: 'auth.confirm_password'.tr(),
+                isPassword: true,
+                fieldType: 'confirmPassword',
+                passwordController: _passwordController,
+                labelText: 'auth.confirm_password'.tr(),
+                prefixIcon: Icons.lock_outline,
+              ),
+              SizedBox(height: SizeConfig.defaultSize! * 0.8),  // Reduced spacing
+              Directionality(
+                textDirection: ui.TextDirection.ltr,
+                child: AuthTextField(
+                  controller: _phoneController,
+                  hintText: 'auth.phone_hint'.tr(),
+                  keyboardType: TextInputType.phone,
+                  fieldType: 'phone',
+                  labelText: 'auth.phone'.tr(),
+                  prefixIcon: Icons.phone_android_rounded,
+                  maxLength: 16,
+                  onChanged: (value) {
+                    if (value.length > 16) {
+                      _phoneController.text = value.substring(0, 16);
+                      _phoneController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: 16),
+                      );
+                    }
+                  },
+                ),
+              ),
+              SizedBox(height: SizeConfig.defaultSize! * 3),  // Reduced bottom spacing
+            ],
+          ),
+        ),
+        Positioned(
+          bottom: -SizeConfig.defaultSize! * 1.5,  // Reduced bottom position
+          left: 0,
+          right: 0,
+          child: Center(
+            child: SizedBox(
+              width: SizeConfig.size(p: 180, l: 180),  // Reduced button width
+              height: SizeConfig.defaultSize! * 5,    // Reduced button height
+              child: CustomButton(
+                text: 'auth.sign_up'.tr(),
+                onPressed: _handleSignUp,
+                fontSize: SizeConfig.defaultSize! * 1.3,  // Reduced font size
+              ),
             ),
-            TextButton(
-              onPressed: () {
-                if (!isVerifying) {
-                  context.read<AuthBloc>().add(
-                    PhoneNumberSubmitted(
-                        phoneNumber: phoneController.text),
-                  );
-                  setState(() => isVerifying = true);
-                } else {
-                  context.read<AuthBloc>().add(
-                    OTPSubmitted(otp: otpController.text),
-                  );
-                  Navigator.pop(context);
-                }
-              },
-              child: Text(isVerifying ? 'Verify' : 'Send OTP'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDivider(Color dividerColor) {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: dividerColor)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize!),
+          child: Text(
+            'auth.or_continue_with'.tr(),
+            style: TextStyle(
+              color: dividerColor,
+              fontSize: SizeConfig.defaultSize! * 1.2,
+            ),
+          ),
+        ),
+        Expanded(child: Divider(color: dividerColor)),
+      ],
+    );
+  }
+
+  Widget _buildGoogleSignIn(Color textColor) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize!),
+      width: double.infinity,
+      height: SizeConfig.defaultSize! * 5,
+      child: ElevatedButton(
+        onPressed: _handleGoogleSignIn,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: kPreIcon.withValues(alpha: 0.7),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 3),
+          ),
+          elevation: 0,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FaIcon(
+              FontAwesomeIcons.google,
+              color: kMainDark,
+              size: SizeConfig.defaultSize! * 1.7,
+            ),
+            SizedBox(width: SizeConfig.defaultSize!),
+            Text(
+              'auth.continue_with_google'.tr(),
+              style: TextStyle(
+                color: kMainDark,
+                fontSize: SizeConfig.defaultSize! * 1.6,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+  Widget _buildLoginRow(Color textColor, Color accentColor, Color backgroundButton) {
+    return Transform.scale(
+      scale: 1,
+      child: Center(
+        child: Container(
+          decoration: BoxDecoration(
+            color: backgroundButton,
+            borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 3),
+          ),
+          padding: EdgeInsets.symmetric(
+            vertical: SizeConfig.defaultSize! * 0.9,
+            horizontal: SizeConfig.defaultSize! * 2,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min, // Makes the Row wrap its content
+            children: [
+              Text(
+                'auth.already_have_account'.tr(),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: SizeConfig.defaultSize! * 1.5,
+                ),
+              ),
+              SizedBox(width: SizeConfig.defaultSize! * 0.5),
+              TextButton(
+                onPressed: () => Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                ),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'auth.login'.tr(),
+                  style: TextStyle(
+                    color: kButton,
+                    fontSize: SizeConfig.defaultSize! * 1.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleSignUp() {
+    if (_isNavigating) return;
+
+    if (_nameController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      UI.errorSnack(
+        context,
+        'auth.fill_required_fields'.tr(),
+      );
+      return;
+    }
+
+    context.read<AuthBloc>().add(
+      CheckUserDataAvailability(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+        phone: _phoneController.text.trim(),
+      ),
+    );
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isNavigating) return;
+
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+        signInOption: SignInOption.standard,
+      );
+
+      await googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser != null) {
+        context.read<AuthBloc>().add(GoogleSignInRequested());
+      }
+    } catch (e) {
+      UI.errorSnack(
+        context,
+        'auth.google_sign_in_failed'.tr(args: [e.toString()]),
+      );
+    }
   }
 }

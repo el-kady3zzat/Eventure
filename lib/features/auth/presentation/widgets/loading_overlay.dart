@@ -14,16 +14,16 @@ class LoadingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black54,
+      color: Colors.black45,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-             CircularProgressIndicator(color: kMainDark,),
+             CircularProgressIndicator(color: kButton,),
              SizedBox(height: 16.h),
             Text(
               message,
-              style: const TextStyle(color: Colors.white),
+              style:  TextStyle(color: Colors.white, fontSize: 16.sp),
             ),
           ],
         ),
