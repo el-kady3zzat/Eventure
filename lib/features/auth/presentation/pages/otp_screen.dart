@@ -48,11 +48,11 @@ class OTPVerificationView extends StatefulWidget {
   @override
   State<OTPVerificationView> createState() => _OTPVerificationViewState();
 }
-class _OTPVerificationViewState extends State<OTPVerificationView> {
-  final TextEditingController textEditingController = TextEditingController();
-  final StreamController<ErrorAnimationType> errorController =
-  StreamController<ErrorAnimationType>.broadcast();
-  final FocusNode focusNode = FocusNode();
+
+class _OTPVerificationViewState extends State<OTPVerificationView> with WidgetsBindingObserver {
+  late final TextEditingController textEditingController;
+  late final StreamController<ErrorAnimationType> errorController;
+  late final FocusNode focusNode;
   bool hasError = false;
   String currentText = "";
   bool _isResendEnabled = false;
@@ -64,31 +64,36 @@ class _OTPVerificationViewState extends State<OTPVerificationView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _startResendTimer();
-      }
-    });
+    WidgetsBinding.instance.addObserver(this);
+    textEditingController = TextEditingController();
+    errorController = StreamController<ErrorAnimationType>.broadcast();
+    focusNode = FocusNode();
+
+    if (!_isDisposed && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _startResendTimer();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    super.dispose(); // Call this first
+    WidgetsBinding.instance.removeObserver(this);
     _isDisposed = true;
     _timer?.cancel();
-
-    // Remove focus before disposing
-    focusNode.unfocus();
-
-    // Dispose immediately
+    errorController.close();
+    if (focusNode.hasFocus) {
+      focusNode.unfocus();
+    }
     textEditingController.dispose();
     focusNode.dispose();
-    errorController.close();
-
-    super.dispose();
   }
 
   void _startResendTimer() {
-    if (_isDisposed) return;
+    if (_isDisposed || !mounted) return;
 
     setState(() {
       _isResendEnabled = false;
@@ -101,7 +106,6 @@ class _OTPVerificationViewState extends State<OTPVerificationView> {
         timer.cancel();
         return;
       }
-
       setState(() {
         if (_resendTimer > 0) {
           _resendTimer--;
@@ -124,19 +128,22 @@ class _OTPVerificationViewState extends State<OTPVerificationView> {
           size: SizeConfig.defaultSize! * 2,
         ),
         onPressed: () {
-          setState(() {
-            _isNavigating = true;
-          });
           if (mounted) {
+            setState(() {
+              _isNavigating = true;
+            });
             focusNode.unfocus();
+            Navigator.of(context).pop();
           }
-          Navigator.of(context).pop();
         },
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
+    if (_isDisposed) return Container();
+
     SizeConfig.mContext = context;
     SizeConfig().init(context);
 
@@ -146,50 +153,51 @@ class _OTPVerificationViewState extends State<OTPVerificationView> {
         final textColor = isDarkMode ? Colors.white : kMainLight;
         final subTextColor = isDarkMode ? Colors.white70 : kMainLight;
 
-        return WillPopScope(
-          onWillPop: () async {
-            setState(() {
-              _isNavigating = true;
-            });
-            return true;
+        return PopScope(
+          canPop: !_isNavigating,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (!didPop && mounted) {
+              setState(() {
+                _isNavigating = true;
+              });
+              focusNode.unfocus();
+              Navigator.of(context).pop();
+            }
           },
           child: BlocConsumer<AuthBloc, AuthState>(
-            listenWhen: (previous, current) {
-              if (_isDisposed || _isNavigating) return false;
-              return current is AuthLoading ||
-                  current is OTPVerificationSuccess ||
-                  current is OTPVerificationError ||
-                  current is PhoneNumberVerificationSent ||
-                  current is AuthSuccess;
-            },
+            listenWhen: (previous, current) =>
+            !_isDisposed && !_isNavigating && mounted,
             listener: (context, state) {
-              if (_isDisposed || _isNavigating || !mounted) return;
-
-
-
               if (state is PhoneNumberVerificationSent) {
-                UI.successSnack(context, state.message.tr());
-                _startResendTimer();
-              } else if (state is OTPVerificationSuccess) {
-                setState(() {
-                  _isNavigating = true;
-                });
-                UI.successSnack(context, state.message.tr());
                 if (mounted) {
+                  UI.successSnack(context, state.message.tr());
+                  _startResendTimer();
+                }
+              } else if (state is OTPVerificationSuccess) {
+                if (mounted) {
+                  setState(() {
+                    _isNavigating = true;
+                  });
+                  UI.successSnack(context, state.message.tr());
                   widget.onVerificationComplete();
                 }
               } else if (state is AuthSuccess) {
-                setState(() {
-                  _isNavigating = true;
-                });
                 if (mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                        (route) => false,
-                  );
+                  setState(() {
+                    _isNavigating = true;
+                  });
+                  focusNode.unfocus();
+                  Future.delayed(Duration.zero, () {
+                    if (mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => HomePage()),
+                            (route) => false,
+                      );
+                    }
+                  });
                 }
               } else if (state is OTPVerificationError) {
-                if (!_isDisposed && mounted) {
+                if (mounted) {
                   errorController.add(ErrorAnimationType.shake);
                   setState(() {
                     hasError = true;
@@ -203,12 +211,23 @@ class _OTPVerificationViewState extends State<OTPVerificationView> {
                 backgroundColor: backgroundColor,
                 resizeToAvoidBottomInset: true,
                 appBar: _buildAppBar(textColor),
-                body: Stack(
-                  children: [
-                    _buildMainContent(textColor, subTextColor),
-                    if (state is AuthLoading)
-                      LoadingOverlay(message: state.message.tr()),
-                  ],
+                body: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Stack(
+                          children: [
+                            _buildMainContent(textColor, subTextColor),
+                            if (state is AuthLoading)
+                              LoadingOverlay(message: state.message.tr()),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               );
             },
@@ -217,157 +236,290 @@ class _OTPVerificationViewState extends State<OTPVerificationView> {
       },
     );
   }
-  Widget _buildMainContent(Color textColor, Color subTextColor) {
-    final isLandscape = SizeConfig.orientation == Orientation.landscape;
 
-    if (isLandscape) {
-      return SafeArea(
-        child: Row(
-          children: [
-            // Left half - Image
-            Expanded(
-              flex: 1,
-              child: Container(
-                padding: EdgeInsets.all(SizeConfig.defaultSize! * 2),
-                child: Center(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: context.watch<ThemeCubit>().state ? Colors.white : kMainLight,
-                      borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 1.5),
-                    ),
-                    padding: EdgeInsets.all(SizeConfig.defaultSize! * 2),
-                    child: SvgPicture.asset(
-                      'assets/images/Enter OTP-bro.svg',
-                      fit: BoxFit.contain,
-                    ),
+  Widget _buildMainContent(Color textColor, Color subTextColor) {
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        return orientation == Orientation.landscape
+            ? _buildLandscapeLayout(textColor, subTextColor)
+            : _buildPortraitLayout(textColor, subTextColor);
+      },
+    );
+  }
+
+  Widget _buildLandscapeLayout(Color textColor, Color subTextColor) {
+    return Row(
+      children: [
+        // Left side - Image
+        Expanded(
+          child: Container(
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: context.watch<ThemeCubit>().state ? kDetails : kMainLight,
+              borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 1.5),
+            ),
+            margin: EdgeInsets.all(SizeConfig.defaultSize! * 2),
+            padding: EdgeInsets.all(SizeConfig.defaultSize! * 2),
+            child: SvgPicture.asset(
+              'assets/images/Enter OTP-bro.svg',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+
+        // Right side - Content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: SizeConfig.defaultSize! * 2,
+              vertical: SizeConfig.defaultSize! * 2,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'auth.phone_verification'.tr(),
+                  style: TextStyle(
+                    fontSize: SizeConfig.defaultSize! * 2.8,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
                   ),
                 ),
-              ),
-            ),
-
-            // Right half - Content
-            Expanded(
-              flex: 1,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: SizeConfig.defaultSize! * 2,
+                SizedBox(height: SizeConfig.defaultSize! * 0.8),
+                Text(
+                  'auth.enter_verification_code'.tr(),
+                  style: TextStyle(
+                    color: subTextColor,
+                    fontSize: SizeConfig.defaultSize! * 1.4,
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                SizedBox(height: SizeConfig.defaultSize! * 0.8),
+                Text(
+                  widget.initialPhoneNumber,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: SizeConfig.defaultSize! * 1.6,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textDirection: ui.TextDirection.ltr,
+                  textAlign: TextAlign.left,
+                ),
+                SizedBox(height: SizeConfig.defaultSize! * 2.4),
+                Container(
+                  decoration: BoxDecoration(
+                    color: kDetails,
+                    borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 1.2),
+                  ),
+                  padding: EdgeInsets.all(SizeConfig.defaultSize! * 1.2),
+                  child: Column(
+                    children: [
+                      Directionality(
+                        textDirection: ui.TextDirection.ltr,
+                        child: PinCodeTextField(
+                          appContext: context,
+                          length: 6,
+                          focusNode: focusNode,
+                          obscureText: false,
+                          animationType: AnimationType.fade,
+                          pinTheme: PinTheme(
+                            shape: PinCodeFieldShape.box,
+                            borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 1.2),
+                            fieldHeight: SizeConfig.defaultSize! * 4.5,
+                            fieldWidth: SizeConfig.defaultSize! * 4.5,
+                            activeFillColor: kHeader,
+                            inactiveFillColor: Colors.transparent,
+                            selectedFillColor: Colors.transparent,
+                            activeColor: kButton,
+                            inactiveColor: context.watch<ThemeCubit>().state ? Colors.white : kMainDark,
+                            selectedColor: kButton,
+                          ),
+                          animationDuration: const Duration(milliseconds: 300),
+                          backgroundColor: Colors.transparent,
+                          enableActiveFill: true,
+                          errorAnimationController: errorController,
+                          controller: textEditingController,
+                          keyboardType: TextInputType.number,
+                          autoFocus: true,
+                          boxShadows: const [],
+                          onCompleted: (v) {
+                            if (!_isDisposed && mounted && !_isNavigating) {
+                              _handleVerification();
+                            }
+                          },
+                          onChanged: (value) {
+                            if (!_isDisposed && mounted && !_isNavigating) {
+                              setState(() {
+                                currentText = value;
+                              });
+                            }
+                          },
+                          beforeTextPaste: (text) => true,
+                          textStyle: TextStyle(
+                            fontSize: SizeConfig.defaultSize! * 2.4,
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: SizeConfig.defaultSize! * 2.4),
+                      SizedBox(
+                        width: double.infinity,
+                        height: SizeConfig.defaultSize! * 5.6,
+                        child: CustomButton(
+                          text: 'auth.verify'.tr(),
+                          onPressed: (!_isDisposed && !_isNavigating && currentText.length == 6 && mounted)
+                              ? _handleVerification
+                              : null,
+                          fontSize: SizeConfig.defaultSize! * 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: SizeConfig.defaultSize! * 2.4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'auth.phone_verification'.tr(),
-                      style: TextStyle(
-                        fontSize: SizeConfig.defaultSize! * 2.8,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                    SizedBox(height: SizeConfig.defaultSize! * 0.8),
-                    Text(
-                      'auth.enter_verification_code'.tr(),
+                      'auth.didnt_receive_code'.tr(),
                       style: TextStyle(
                         color: subTextColor,
-                        fontSize: SizeConfig.defaultSize! * 1.4,
+                        fontSize: SizeConfig.defaultSize! * 1.8,
                       ),
                     ),
-                    SizedBox(height: SizeConfig.defaultSize! * 0.8),
-                    Text(
-                      widget.initialPhoneNumber,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: SizeConfig.defaultSize! * 1.6,
-                        fontWeight: FontWeight.bold,
+                    SizedBox(width: SizeConfig.defaultSize! * 1.2),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: context.watch<ThemeCubit>().state ? kMainLight : kMainLight,
+                        borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 3),
                       ),
-                      textDirection: ui.TextDirection.ltr,
-                      textAlign: TextAlign.left,
+                      child: InkWell(
+                        onTap: (!_isDisposed && !_isNavigating && _isResendEnabled && mounted)
+                            ? _handleResend
+                            : null,
+                        child: Padding(
+                          padding: EdgeInsets.all(SizeConfig.defaultSize! * 1.2),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _isResendEnabled
+                                    ? 'auth.resend_code'.tr()
+                                    : 'auth.resend_code_timer'.tr(),
+                                style: TextStyle(
+                                  color: _isResendEnabled
+                                      ? kButton
+                                      : context.watch<ThemeCubit>().state ? Colors.white : kMainDark,
+                                  fontSize: SizeConfig.defaultSize! * 1.6,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (!_isResendEnabled) ...[
+                                SizedBox(width: SizeConfig.defaultSize! * 0.5),
+                                Text(
+                                  '(${_resendTimer.toString()})',
+                                  style: TextStyle(
+                                    color: context.watch<ThemeCubit>().state ? Colors.white : kMainDark,
+                                    fontSize: SizeConfig.defaultSize! * 1.6,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    SizedBox(height: SizeConfig.defaultSize! * 2.4),
-                    _buildVerificationUI(textColor, subTextColor),
                   ],
                 ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPortraitLayout(Color textColor, Color subTextColor) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: SizeConfig.defaultSize! * 2,
+        vertical: SizeConfig.defaultSize! * 2,
+      ),
+      child: Column(
+        children: [
+          AspectRatio(
+            aspectRatio: 16/9,
+            child: Container(
+              decoration: BoxDecoration(
+                color: context.watch<ThemeCubit>().state ? kDetails : kDetails.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 1.5),
+              ),
+              padding: EdgeInsets.all(SizeConfig.defaultSize! * 2),
+              child: SvgPicture.asset(
+                'assets/images/Enter OTP-bro.svg',
+                fit: BoxFit.contain,
               ),
             ),
-          ],
-        ),
-      );
-    }
-
-    // Portrait mode
-    return SafeArea(
-      child: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: SizeConfig.defaultSize! * 2,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: SizeConfig.defaultSize! * 2),
-              Center(
-                child: Container(
-                  width: SizeConfig.screenWidth! * 0.8,
-                  height: SizeConfig.screenHeight! * 0.25,
-                  decoration: BoxDecoration(
-                    color: context.watch<ThemeCubit>().state ? Colors.white : kMainLight,
-                    borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 1.5),
-                  ),
-                  padding: EdgeInsets.all(SizeConfig.defaultSize! * 2),
-                  child: SvgPicture.asset(
-                    'assets/images/Enter OTP-bro.svg',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              SizedBox(height: SizeConfig.defaultSize! * 3),
-              Text(
-                'auth.phone_verification'.tr(),
-                style: TextStyle(
-                  fontSize: SizeConfig.defaultSize! * 2.8,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              SizedBox(height: SizeConfig.defaultSize! * 0.8),
-              Text(
-                'auth.enter_verification_code'.tr(),
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: SizeConfig.defaultSize! * 1.4,
-                ),
-              ),
-              SizedBox(height: SizeConfig.defaultSize! * 0.8),
-              Text(
-                widget.initialPhoneNumber,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: SizeConfig.defaultSize! * 1.6,
-                  fontWeight: FontWeight.bold,
-                ),
-                textDirection: ui.TextDirection.ltr,
-                textAlign: TextAlign.left,
-              ),
-              SizedBox(height: SizeConfig.defaultSize! * 2.4),
-              _buildVerificationUI(textColor, subTextColor),
-            ],
-          ),
-        ),
+          SizedBox(height: SizeConfig.defaultSize! * 3),
+          _buildContentColumn(textColor, subTextColor),
+        ],
       ),
     );
   }
+
+  Widget _buildContentColumn(Color textColor, Color subTextColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'auth.phone_verification'.tr(),
+          style: TextStyle(
+            fontSize: SizeConfig.defaultSize! * 2.8,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        SizedBox(height: SizeConfig.defaultSize! * 0.8),
+        Text(
+          'auth.enter_verification_code'.tr(),
+          style: TextStyle(
+            color: subTextColor,
+            fontSize: SizeConfig.defaultSize! * 1.4,
+          ),
+        ),
+        SizedBox(height: SizeConfig.defaultSize! * 0.8),
+        Text(
+          widget.initialPhoneNumber,
+          style: TextStyle(
+            color: textColor,
+            fontSize: SizeConfig.defaultSize! * 1.6,
+            fontWeight: FontWeight.bold,
+          ),
+          textDirection: ui.TextDirection.ltr,
+          textAlign: TextAlign.left,
+        ),
+        SizedBox(height: SizeConfig.defaultSize! * 2.4),
+        if (mounted && !_isDisposed) _buildVerificationUI(textColor, subTextColor),
+      ],
+    );
+  }
+
   Widget _buildVerificationUI(Color textColor, Color subTextColor) {
+    if (_isDisposed || !mounted) return Container();
+
     return Column(
       children: [
         Directionality(
           textDirection: ui.TextDirection.ltr,
           child: PinCodeTextField(
+            cursorColor: kButton,
             appContext: context,
             length: 6,
-            focusNode: mounted ? focusNode : null,
+            focusNode: focusNode,
             obscureText: false,
             animationType: AnimationType.fade,
-            //mainAxisAlignment: MainAxisAlignment.start,
             pinTheme: PinTheme(
               shape: PinCodeFieldShape.box,
               borderRadius: BorderRadius.circular(SizeConfig.defaultSize! * 1.2),
@@ -389,12 +541,12 @@ class _OTPVerificationViewState extends State<OTPVerificationView> {
             autoFocus: true,
             boxShadows: const [],
             onCompleted: (v) {
-              if (!_isDisposed && !_isNavigating && mounted) {
+              if (!_isDisposed && mounted && !_isNavigating) {
                 _handleVerification();
               }
             },
             onChanged: (value) {
-              if (!_isDisposed && !_isNavigating && mounted) {
+              if (!_isDisposed && mounted && !_isNavigating) {
                 setState(() {
                   currentText = value;
                 });
@@ -443,17 +595,33 @@ class _OTPVerificationViewState extends State<OTPVerificationView> {
                   ),
                   child: Padding(
                     padding: EdgeInsets.all(SizeConfig.defaultSize! * 1.2),
-                    child: Text(
-                      _isResendEnabled
-                          ? 'auth.resend_code'.tr()
-                          : 'auth.resend_code_timer'.tr(args: [_resendTimer.toString()]),
-                      style: TextStyle(
-                        color: _isResendEnabled
-                            ? kButton
-                            : context.watch<ThemeCubit>().state ? Colors.white : kMainDark,
-                        fontSize: SizeConfig.defaultSize! * 1.6,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _isResendEnabled
+                              ? 'auth.resend_code'.tr()
+                              : 'auth.resend_code_timer'.tr(),
+                          style: TextStyle(
+                            color: _isResendEnabled
+                                ? kButton
+                                : context.watch<ThemeCubit>().state ? Colors.white : Colors.white,
+                            fontSize: SizeConfig.defaultSize! * 1.6,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (!_isResendEnabled) ...[
+                          SizedBox(width: SizeConfig.defaultSize! * 0.5),
+                          Text(
+                            ':${_resendTimer.toString()}',
+                            style: TextStyle(
+                              color: context.watch<ThemeCubit>().state ? Colors.white : Colors.white,
+                              fontSize: SizeConfig.defaultSize! * 1.6,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),
