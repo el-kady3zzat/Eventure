@@ -1,34 +1,113 @@
-
-
+import 'package:easy_localization/easy_localization.dart';
+import 'package:eventure/core/utils/helper/ui.dart';
+import 'package:eventure/core/utils/theme/colors.dart';
+import 'package:eventure/core/utils/theme/theme_cubit/theme_cubit.dart';
 import 'package:eventure/features/auth/presentation/pages/login_screen.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? kMainDark : Colors.white;
+    final textColor = isDarkMode ? Colors.white : kMainDark;
+
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('Settings'),
+        backgroundColor: backgroundColor,
+        title: Text(
+          'settings.title'.tr(),
+          style: TextStyle(color: textColor),
+        ),
+        actions: [
+          // Theme Toggle
+          IconButton(
+            icon: Icon(
+              isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: textColor,
+            ),
+            onPressed: () {
+              context.read<ThemeCubit>().toggleTheme();
+              UI.infoSnack(
+                context,
+                'settings.theme_changed'.tr(),
+              );
+            },
+          ),
+          // Language Toggle
+          IconButton(
+            icon: Icon(
+              Icons.language,
+              color: textColor,
+            ),
+            onPressed: () {
+              _showLanguageDialog(context);
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 50),
-            ),
-            onPressed: () {
-              _showLogoutDialog(context);
-            },
-            child: const Text('Logout'),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Settings options can go here
+              const Spacer(),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                onPressed: () {
+                  _showLogoutDialog(context);
+                },
+                child: Text('settings.logout'.tr()),
+              ),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('settings.select_language'.tr()),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('English'),
+              onTap: () {
+                context.setLocale(const Locale('en'));
+                Navigator.pop(context);
+                UI.successSnack(
+                  context,
+                  'settings.language_changed'.tr(),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('العربية'),
+              onTap: () {
+                context.setLocale(const Locale('ar'));
+                Navigator.pop(context);
+                UI.successSnack(
+                  context,
+                  'settings.language_changed'.tr(),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -38,43 +117,38 @@ class SettingsPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text('settings.logout'.tr()),
+        content: Text('settings.logout_confirmation'.tr()),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop();
             },
-            child: const Text('Cancel'),
+            child: Text('settings.cancel'.tr()),
           ),
           TextButton(
             onPressed: () async {
               try {
-                // Get FirebaseService instance and sign out
                 await FirebaseAuth.instance.signOut();
 
                 if (context.mounted) {
-                  // Close dialog
                   Navigator.of(context).pop();
-
-                  // Navigate to login page and remove all previous routes
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => LoginScreen()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
                 }
               } catch (e) {
                 if (context.mounted) {
-                  // Show error message if logout fails
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to logout: ${e.toString()}'),
-                      backgroundColor: Colors.red,
-                    ),
+                  UI.errorSnack(
+                    context,
+                    'settings.logout_failed'.tr(args: [e.toString()]),
                   );
                 }
               }
             },
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              'settings.logout'.tr(),
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],
