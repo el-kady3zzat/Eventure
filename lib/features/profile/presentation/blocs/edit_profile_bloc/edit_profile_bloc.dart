@@ -43,7 +43,7 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
   void _subscribeProfile(
       SubscribeProfile event, Emitter<EditProfileState> emit) {
     if (currentUser == null) {
-      debugPrint("❌ No user found");
+      debugPrint(" No user found");
       return;
     }
 
@@ -62,7 +62,7 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
           add(EditProfileUpdated(user));
           add(EditImageUpdated(image: image));
         } else {
-          add(ProfileSubscriptionError("❌ User data not found"));
+          add(ProfileSubscriptionError(" User data not found"));
         }
       },
       onError: (error) {
@@ -134,16 +134,16 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
         (route) => false,
       );
     } catch (e) {
-      debugPrint('❌ Error during edit: $e');
+      debugPrint(' Error during edit: $e');
       CustomSnackBar.showError(
           context: context, message: 'Edit failed: ${e.toString()}');
     }
   }
 
-  /// Pick and update avatar (Triggered manually)
+  /// Pick and update avatar
   Future<void> _updateAvatar(
       EditUpdateAvatar event, Emitter<EditProfileState> emit) async {
-    emit(AvatarUpdating()); // Trigger loading state
+    emit(AvatarUpdating());
 
     try {
       emit(EditProfileImageLoading());
@@ -164,9 +164,7 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
 
         // Emit empty state to force UI rebuild
         emit(EditProfileImageLoaded(image: null));
-        // await Future.delayed(Duration(milliseconds: 50));
 
-        // Emit actual state with the new image
         emit(EditProfileImageLoaded(image: Uint8List.fromList(imageBytes)));
         emit(EditProfileImageUploaded(image: Uint8List.fromList(imageBytes)));
       } else {

@@ -1,13 +1,15 @@
+import 'dart:convert';
 import 'package:eventure/core/utils/theme/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class EventCard extends StatelessWidget {
+class SavedEventCard extends StatelessWidget {
   final String asset;
   final String title;
   final String date;
   final String time;
 
-  const EventCard({
+  const SavedEventCard({
     Key? key,
     required this.asset,
     required this.title,
@@ -18,17 +20,15 @@ class EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(top: 10, left: 15, right: 15 , bottom: 38),
+      margin: EdgeInsets.only(top: 10.h, left: 15.w, right: 15.w, bottom: 38.h),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: kMainLight
-,
-         // Dark background
+        borderRadius: BorderRadius.all(Radius.circular(25.r)),
+        color: kMainLight,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            blurRadius: 10.r,
+            offset: Offset(0.w, 5.h),
           ),
         ],
       ),
@@ -38,101 +38,95 @@ class EventCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image with edit icon
               Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                    child: Image.asset(
-                      asset,
-                      height: 140,
+                    borderRadius: BorderRadius.circular(25.r),
+                    child: Image.memory(
+                      base64Decode(asset),
+                      height: 180.h,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
                   ),
                   Positioned(
-                    top: 10,
-                    right: 10,
+                    top: 13.h,
+                    right: 13.w,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        color: kWhite,
+                        borderRadius: BorderRadius.circular(20.r),
                       ),
-                      padding: const EdgeInsets.all(8),
-                      child: const Icon(Icons.edit_outlined, size: 20, color: Colors.black),
+                      padding: const EdgeInsets.all(8).w,
+                      child: Icon(Icons.edit_outlined,
+                          size: 18.w, color: kMainLight),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          // Bottom section (OVERLAPS THE IMAGE)
           Positioned(
-            bottom: -30, // Moves the container up slightly to overlap the image
-            left: 10,
-            right: 10,
+            bottom: -35.h,
+            left: 10.w,
+            right: 10.w,
             child: Container(
-             margin: EdgeInsets.only(left: 5 , right: 5),
+              margin: EdgeInsets.only(left: 5.w, right: 5.w),
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-        color: kMainLight,
-                 // Matches the background
+                borderRadius: BorderRadius.circular(20.r),
+                color: kMainLight,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Event Info
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                        style: TextStyle(
+                          color: kWhite,
+                          fontSize: 17.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 8.h),
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today, color: Colors.white54, size: 14),
-                          const SizedBox(width: 5),
-                          Text(date, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                          const SizedBox(width: 10),
-                          const Icon(Icons.access_time, color: Colors.white54, size: 14),
-                          const SizedBox(width: 5),
-                          Text(time, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                          Icon(Icons.calendar_today,
+                              color: kWhite, size: 12.sp),
+                          SizedBox(width: 5.w),
+                          Text(date,
+                              style: TextStyle(color: kWhite, fontSize: 10.sp)),
+                          SizedBox(width: 10.w),
+                          Icon(Icons.access_time, color: kWhite, size: 14.w),
+                          SizedBox(width: 5),
+                          Text(time,
+                              style: TextStyle(color: kWhite, fontSize: 10.sp)),
                         ],
                       ),
                     ],
                   ),
-                  // Chat Button with Edit Icon
-                 
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: kButton,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        ),
-                        onPressed: () {},
-                        child:  Text("Chat" ,
-                         style:TextStyle(color: kMainLight)),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: kDetails,
+                      backgroundColor: kButton,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
                       ),
-                     
-                    ],
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                    ),
+                    onPressed: () {},
+                    child: Text("Chat",
+                        style: TextStyle(
+                            color: kMainLight, fontWeight: FontWeight.bold)),
                   ),
-                
+                ],
+              ),
             ),
           ),
-          
         ],
       ),
     );

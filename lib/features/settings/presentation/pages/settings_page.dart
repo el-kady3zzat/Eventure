@@ -14,8 +14,11 @@ import 'package:lucide_icons/lucide_icons.dart';
 class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? kMainDark : Colors.white;
+    final textColor = isDarkMode ? Colors.white : kMainDark;
     return Scaffold(
-      backgroundColor: kMainLight,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -24,7 +27,7 @@ class SettingsPage extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 17.sp,
                     fontWeight: FontWeight.bold,
-                    color: kWhite)),
+                    color: textColor)),
             SizedBox(height: 25.h),
             SettingsOption(
                 icon: LucideIcons.bell,

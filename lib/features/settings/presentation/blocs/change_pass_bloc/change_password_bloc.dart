@@ -3,7 +3,8 @@ import 'package:eventure/features/settings/presentation/blocs/change_pass_bloc/c
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class ChangePasswordBloc extends Bloc<ChangePasswordEvent, ChangePasswordState> {
+class ChangePasswordBloc
+    extends Bloc<ChangePasswordEvent, ChangePasswordState> {
   ChangePasswordBloc() : super(ChangePasswordInitial()) {
     on<ChangePasswordRequested>(_onChangePasswordRequested);
   }

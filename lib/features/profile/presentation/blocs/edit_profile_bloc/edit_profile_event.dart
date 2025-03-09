@@ -20,31 +20,31 @@ class SaveEdits extends EditProfileEvent {
     required this.phoneNumber,
   });
 }
+
 class EditUpdateAvatar extends EditProfileEvent {
-  // BuildContext ? context;
-  final String ? image;
-  bool isCamera; 
-  EditUpdateAvatar({ this.image , required this.isCamera });
+  final String? image;
+  bool isCamera;
+  EditUpdateAvatar({this.image, required this.isCamera});
 }
+
 class EditImageUpdated extends EditProfileEvent {
   final Uint8List? image;
 
   EditImageUpdated({required this.image});
 }
-class EditProfileUpdated extends EditProfileEvent{
-final FSUser user ;
-EditProfileUpdated(this.user);
+
+class EditProfileUpdated extends EditProfileEvent {
+  final FSUser user;
+  EditProfileUpdated(this.user);
 }
+
 class SubscribeProfile extends EditProfileEvent {}
+
 class ProfileSubscriptionError extends EditProfileEvent {
   final String errorMessage;
   ProfileSubscriptionError(this.errorMessage);
 }
-class LoadEditProfile extends EditProfileEvent {
-  
-}
+
 class EditImageRemoved extends EditProfileEvent {
   EditImageRemoved();
 }
-class RemoveAvatar extends EditProfileEvent {}
-

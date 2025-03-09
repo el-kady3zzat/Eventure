@@ -4,11 +4,9 @@ import 'package:eventure/features/settings/presentation/blocs/change_pass_bloc/c
 import 'package:eventure/features/settings/presentation/blocs/change_pass_bloc/change_password_state.dart';
 import 'package:eventure/features/settings/presentation/widgets/change_pass_widgets/header_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:eventure/core/utils/theme/colors.dart';
-// Import your Bloc file
 
 class ChangePasswordPage extends StatefulWidget {
   @override
@@ -53,7 +51,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             CustomSnackBar.showSuccess(
                 context: context, message: "Password updated successfully!");
 
-            Navigator.pop(context); // Close the screen on success
+            Navigator.pop(context);
           } else if (state is ChangePasswordFailure) {
             CustomSnackBar.showError(context: context, message: state.error);
           }
@@ -159,7 +157,4 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       },
     );
   }
-
- 
-  
 }
