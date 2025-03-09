@@ -108,8 +108,7 @@ class _SignUpViewState extends State<SignUpView> {
                 MaterialPageRoute(builder: (context) => HomePage()),
                     (route) => false,
               );
-            }
-            else if (state is PhoneNumberVerificationSent) {
+            } else if (state is PhoneNumberVerificationSent) {
               UI.successSnack(context, state.message.tr());
               final authBloc = context.read<AuthBloc>();
               final themeCubit = context.read<ThemeCubit>();
@@ -140,28 +139,27 @@ class _SignUpViewState extends State<SignUpView> {
                       ),
                     ),
                   ),
-                );
+                ).then((_) {
+                  // Reset _isNavigating when returning from OTP
+                  if (mounted) setState(() => _isNavigating = false);
+                });
               }
-            }
-
-            else if (state is GoogleSignInSuccess) {
+            } else if (state is GoogleSignInSuccess) {
               UI.successSnack(context, state.message.tr());
               setState(() => _isNavigating = true);
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (context) => HomePage()),
                     (route) => false,
               );
-            } else if (state is AuthError ||
-                state is GoogleSignInError ||
-                state is OTPVerificationError) {
+            } else if (state is AuthError || state is GoogleSignInError || state is OTPVerificationError) {
               UI.errorSnack(
                 context,
                 (state is AuthError
                     ? state.message
                     : state is GoogleSignInError
-
                     ? state.message
-                    : (state as OTPVerificationError).message).tr(),
+                    : (state as OTPVerificationError).message)
+                    .tr(),
               );
             }
           },
@@ -173,19 +171,20 @@ class _SignUpViewState extends State<SignUpView> {
                   SafeArea(
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(
-                        horizontal: SizeConfig.defaultSize! * 2,
-                        vertical: SizeConfig.defaultSize! * 0.2,
+                        horizontal: SizeConfig.defaultSize ?? 16, // Fallback if null
+                        vertical: SizeConfig.defaultSize ?? 2,
                       ),
                       child: Form(
                         key: _formKey,
                         child: SizeConfig.isPortrait()
-                            ? _buildPortraitLayout(state, textColor, accentColor, subTextColor, dividerColor, backgroundButton)
-                            : _buildLandscapeLayout(state, textColor, accentColor, dividerColor, backgroundButton, subTextColor),
+                            ? _buildPortraitLayout(
+                            state, textColor, accentColor, subTextColor, dividerColor, backgroundButton)
+                            : _buildLandscapeLayout(
+                            state, textColor, accentColor, dividerColor, backgroundButton, subTextColor),
                       ),
                     ),
                   ),
-                  if (state is AuthLoading)
-                    LoadingOverlay(message: state.message.tr()),
+                  if (state is AuthLoading) LoadingOverlay(message: state.message.tr()),
                 ],
               ),
             );
@@ -208,19 +207,25 @@ class _SignUpViewState extends State<SignUpView> {
             ),
           ),
         ),
-        Text(
-          'auth.sign_up'.tr(),
-          style: TextStyle(
-            fontSize: SizeConfig.defaultSize! * 2,
-            fontWeight: FontWeight.bold,
-            color: textColor,
+        Padding(
+          padding:  EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize! * 1.5),
+          child: Text(
+            'auth.sign_up'.tr(),
+            style: TextStyle(
+              fontSize: SizeConfig.defaultSize! * 2,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
           ),
         ),
-        Text(
-          'auth.sign_up_subtitle'.tr(),
-          style: TextStyle(
-            color: subTextColor,
-            fontSize: SizeConfig.defaultSize! * 1.5,
+        Padding(
+          padding:  EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize! * 1.5),
+          child: Text(
+            'auth.sign_up_subtitle'.tr(),
+            style: TextStyle(
+              color: subTextColor,
+              fontSize: SizeConfig.defaultSize! * 1.5,
+            ),
           ),
         ),
         SizedBox(height: SizeConfig.defaultSize! * 2),
@@ -312,7 +317,7 @@ class _SignUpViewState extends State<SignUpView> {
       clipBehavior: Clip.none,
       children: [
         Container(
-          margin: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize! * 0.8),  // Reduced margin
+          margin: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize! * 2),  // Reduced margin
           padding: EdgeInsets.all(SizeConfig.defaultSize! * 1.2),  // Reduced padding
           decoration: BoxDecoration(
             color: kDetails,
