@@ -44,7 +44,7 @@
     "verify": "تحقق",
     "didnt_receive_code": "لم تستلم الرمز؟",
     "resend_code": "إعادة إرسال",
-    "resend_code_timer": "إعادة إرسال ({0})",
+    "resend_code_timer": "إعادة إرسال بعد",
     "enter_valid_code": "يرجى إدخال رمز صحيح",
     "reset_password": "إعادة تعيين كلمة المرور",
     "reset_password_subtitle": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
