@@ -55,7 +55,7 @@
       "verify": "VERIFY",
       "didnt_receive_code": "Didn't receive the code?",
       "resend_code": "RESEND CODE",
-      "resend_code_timer": "RESEND CODE IN {0} SECONDS",
+       "resend_code_timer": "RESEND CODE IN",
       "enter_valid_code": "Please enter a valid verification code"
     },
     "validation": {
